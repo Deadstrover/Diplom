@@ -1,0 +1,1311 @@
+\section{Рабочий проект}
+
+Разработанная система представляет собой графическое приложение для настройки клавиатур с поддержкой расширенных протоколов динамической конфигурации. Ниже приведено описание основных компонентов (модулей) системы, их файловая структура и взаимосвязи.
+
+\subsection{Пакет \texttt{autodetect}}
+
+\subsubsection{Модуль \texttt{device\_monitor.py}}
+
+Реализует класс \texttt{DeviceMonitor} (синглтон), который управляет списком доступных HID-устройств, поддерживающих расширенный протокол, и обеспечивает переключение между ними. Использует отдельный поток \texttt{MonitorThread} для фонового сканирования.
+
+Методы класса \texttt{DeviceMonitor} представлены в таблице \ref{tab:devicemonitor}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{DeviceMonitor}\label{tab:devicemonitor}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:devicemonitor}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	lock & Нет аргументов & Возвращает объект \texttt{MonitorLocker} для исключающей блокировки операций обновления. \\
+	\hline
+	load\_dummy & data & Загружает стороннее JSON-определение клавиатуры (dummy-режим). \\
+	\hline
+	sideload\_legacy\_\newline json & data & Загружает JSON для legacy-клавиатуры. \\
+	\hline
+	load\_legacy\_\newline stack & data & Загружает стек legacy-определений (VIA). \\
+	\hline
+	select\_device & idx & Выбирает устройство по индексу, открывает соединение и перезагружает конфигурацию. \\
+	\hline
+	on\_devices\_\newline updated & devices, changed & Слот, обновляющий список устройств в главном окне. \\
+	\hline
+	update & quiet, hard & Запускает сканирование устройств (вызов \texttt{MonitorThread.update}). \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{monitor\_thread.py}}
+
+Содержит класс \texttt{MonitorThread}, производный от \texttt{QThread}. Выполняет периодическое (раз в секунду) сканирование HID-устройств через \texttt{find\_custom\_devices}. Сигнал \texttt{devices\_updated} передаёт обновлённый список в главный поток.
+
+Методы класса \texttt{MonitorThread} представлены в таблице \ref{tab:monitorthread}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MonitorThread}\label{tab:monitorthread}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:monitorthread}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	run & Нет аргументов & Основной цикл потока: вызов \texttt{update}, пауза 1 с. \\
+	\hline
+	lock / unlock & Нет аргументов & Блокировка/разблокировка обновлений (используется при длительных операциях). \\
+	\hline
+	update & quiet, hard & Сканирует устройства (вне мьютекса), затем обновляет внутренний список. \\
+	\hline
+	load\_dummy / sideload\_legacy\_\newline json / load\_legacy\_\newline stack & data & Сохраняют переданные JSON-данные для дальнейшего использования. \\
+	\hline
+	set\_device & current\_device & Устанавливает текущее выбранное устройство. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{device\_handler.py}}
+
+Определяет классы для работы с различными типами устройств: \texttt{BaseDevice} (общий), \texttt{CustomKeyboard} (основная клавиатура), \texttt{BootloaderDevice} (режим загрузчика), \texttt{DummyKeyboard} (эмуляция). Содержит логику открытия/закрытия HID-канала и получения UID.
+
+Методы классов \texttt{BaseDevice}, \texttt{CustomKeyboard}, \texttt{BootloaderDevice} представлены в таблице \ref{tab:devicehandler}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы классов \texttt{BaseDevice}, \texttt{CustomKeyboard}, \texttt{BootloaderDevice}\label{tab:devicehandler}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:devicehandler}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	open & override\_json & Открывает устройство по пути; для \texttt{CustomKeyboard} загружает определение. \\
+	\hline
+	send / recv & data, length & Низкоуровневый обмен HID-отчётами. \\
+	\hline
+	close & Нет аргументов & Закрывает HID-устройство. \\
+	\hline
+	title & Нет аргументов & Возвращает строку для отображения в комбобоксе. \\
+	\hline
+	get\_uid & Нет аргументов & Запрашивает UID клавиатуры (или загрузчика). \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{hid\_comm.py}}
+
+Предоставляет унифицированный интерфейс к HID-библиотеке (на Linux используется \texttt{hidraw}, на остальных – стандартный \texttt{hid}). Содержит функцию \texttt{hid\_send}, которая добавляет нулевой префикс (report ID) и обрабатывает тайм-ауты.
+
+Функции модуля \texttt{hid\_comm.py} представлены в таблице \ref{hid-comm:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Функции модуля \texttt{hid\_comm.py}\label{hid-comm:table}}\\
+	\hline \centrow Название функции & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	hid\_send & dev, msg, retries & Отправляет сообщение длиной до 32 байт; при неудаче повторяет попытки. \\
+	\hline
+\end{xltabular}
+
+\subsection{Пакет \texttt{comm}}
+
+\subsubsection{Модуль \texttt{base\_comm.py}}
+
+Содержит абстрактный класс \texttt{BaseProtocol} с методом \texttt{\_retrieve\_dynamic\_entries} для пакетного чтения динамических данных (tap dance, combos и т.п.) от клавиатуры.
+
+Метод класса \texttt{BaseProtocol} представлены в таблице \ref{BaseProtocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Метод класса \texttt{BaseProtocol}\label{BaseProtocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	\_retrieve\_\newline dynamic\_\newline entries & cmd, count, fmt & Последовательно запрашивает \texttt{count} записей, распаковывает их согласно формату \texttt{fmt}. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{constants.py}}
+
+Хранит числовые константы протоколов: команды \texttt{CMD\_*}, коды динамических операций \texttt{DYNAMIC\_*}, версии протоколов \texttt{PROTOCOL\_*} и размер буфера \texttt{BUFFER\_FETCH\_CHUNK}. Функций не содержит.
+
+\subsubsection{Модуль \texttt{keyboard\_comm.py}}
+
+Главный класс \texttt{Keyboard}, объединяющий все протоколы (через множественное наследование). Обеспечивает загрузку определения клавиатуры (JSON + LZMA), чтение/запись раскладки, энкодеров, настроек подсветки, а также команды разблокировки/блокировки.
+
+Методы класса \texttt{Keyboard} представлены в таблице \ref{tab:keyboard}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{Keyboard}\label{tab:keyboard}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:keyboard}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload & sideload\_json & Загружает все параметры клавиатуры: слои, матрицу, раскладку, макросы, tap dance, комбинации, переопределения. \\
+	\hline
+	set\_key & layer, row, col, code & Записывает код клавиши в указанный слой и позицию матрицы. \\
+	\hline
+	set\_encoder & layer, index, direction, code & Устанавливает код для энкодера (0 – CCW, 1 – CW). \\
+	\hline
+	save\_layout & Нет аргументов & Сериализует раскладку, макросы, tap dance, комбинации, настройки QMK в JSON-строку. \\
+	\hline
+	restore\_layout & data & Восстанавливает ранее сохранённую раскладку из JSON. \\
+	\hline
+	reset & Нет аргументов & Отправляет команду перезагрузки клавиатуры в режим загрузчика. \\
+	\hline
+	get\_unlock\_status & retries & Возвращает статус разблокировки. \\
+	\hline
+	unlock\_start / unlock\_poll & Нет аргументов & Инициирует и опрашивает процесс разблокировки. \\
+	\hline
+	lock & Нет аргументов & Блокирует клавиатуру (запрещает динамическую запись). \\
+	\hline
+	matrix\_poll & Нет аргументов & Запрашивает состояние матрицы (для тестера). \\
+	\hline
+	qmk\_settings\_set & qsid, value & Устанавливает значение настройки QMK. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_protocol.py}}
+
+Реализует сериализацию/десериализацию макросов в бинарный формат (версии 1 и 2). Содержит методы \texttt{macro\_serialize}, \texttt{macro\_deserialize}, \texttt{set\_macro}, \texttt{macros\_serialize}, \texttt{macros\_deserialize}. Поддерживает действия \texttt{ActionText}, \texttt{ActionTap}, \texttt{ActionDown}, \texttt{ActionUp}, \texttt{ActionDelay}.
+
+Методы протокола макросов представлены в таблице \ref{macro-protocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы протокола макросов\label{macro-protocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_macros\_\newline early & Нет аргументов & Запрашивает количество макросов и размер буфера. \\
+	\hline
+	reload\_macros\_\newline late & Нет аргументов & Загружает бинарный буфер макросов с устройства. \\
+	\hline
+	set\_macro & data & Отправляет сериализованные макросы на устройство (с разблокировкой). \\
+	\hline
+	macro\_serialize / macro\_deserialize & macro / data & Преобразование отдельного макроса. \\
+	\hline
+	macros\_serialize / macros\_\newline deserialize & macros / data & Преобразование списка всех макросов. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{tap\_dance\_protocol.py}}
+
+Предоставляет методы \texttt{reload\_tap\_dance}, \texttt{tap\_dance\_get}, \texttt{tap\_dance\_set}, \texttt{save\_tap\_dance}, \texttt{restore\_tap\_dance}. Работает с динамическими командами \texttt{DYNAMIC\_TAP\_DANCE\_GET/SET}. Каждая запись содержит четыре действия (tap, hold, double-tap, tap+hold) и время тап-термина.
+
+Методы протокола Tap Dance представлены в таблице \ref{tap-dance-protocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы протокола Tap Dance\label{tap-dance-protocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_tap\_dance & Нет аргументов & Загружает все tap dance записи с устройства. \\
+	\hline
+	tap\_dance\_get & idx & Возвращает запись по индексу. \\
+	\hline
+	tap\_dance\_set & idx, entry & Отправляет изменённую запись на устройство. \\
+	\hline
+	save\_tap\_dance & Нет аргументов & Сохраняет все записи в список для JSON. \\
+	\hline
+	restore\_tap\_dance & data & Восстанавливает записи из JSON. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{combo\_protocol.py}}
+
+Аналогично предыдущему, но для комбинаций клавиш (до четырёх триггеров и выходной код). Использует \texttt{DYNAMIC\_COMBO\_GET/SET}.
+
+Методы протокола комбинаций представлены в таблице \ref{combo-protocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы протокола комбинаций\label{combo-protocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_combo & Нет аргументов & Загружает все комбинации с устройства. \\
+	\hline
+	combo\_get & idx & Возвращает комбинацию по индексу. \\
+	\hline
+	combo\_set & idx, entry & Отправляет изменённую комбинацию на устройство. \\
+	\hline
+	save\_combo & Нет аргументов & Сохраняет все комбинации в список для JSON. \\
+	\hline
+	restore\_combo & data & Восстанавливает комбинации из JSON. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{key\_override\_protocol.py}}
+
+Управляет переопределениями клавиш (key overrides). Каждая запись содержит: триггерную клавишу, замену, маски модификаторов (требуемые, отрицательные, подавляемые), битовую маску слоёв и опции.
+
+Методы протокола переопределений клавиш представлены в таблице \ref{key-override-protocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы протокола переопределений клавиш\label{key-override-protocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_key\_\newline override & Нет аргументов & Загружает все переопределения с устройства. \\
+	\hline
+	key\_override\_get & idx & Возвращает запись по индексу. \\
+	\hline
+	key\_override\_set & idx, entry & Отправляет изменённую запись на устройство. \\
+	\hline
+	save\_key\_\newline override & Нет аргументов & Сохраняет все записи в список для JSON. \\
+	\hline
+	restore\_key\_\newline override & data & Восстанавливает записи из JSON. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{alt\_repeat\_key.py}}
+
+Реализует протокол альтернативного повтора (Alt Repeat Key). Запись содержит: клавишу для повтора, альтернативную клавишу, маску разрешённых модификаторов и опции.
+
+Методы протокола альтернативного повтора представлены в таблице \ref{alt-repeat-key:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы протокола альтернативного повтора\label{alt-repeat-key:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_alt\_repeat & Нет аргументов & Загружает все записи с устройства. \\
+	\hline
+	alt\_repeat\_get & idx & Возвращает запись по индексу. \\
+	\hline
+	alt\_repeat\_set & idx, entry & Отправляет изменённую запись на устройство. \\
+	\hline
+	save\_alt\_repeat & Нет аргументов & Сохраняет все записи в список для JSON. \\
+	\hline
+	restore\_alt\_repeat & data & Восстанавливает записи из JSON. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{dynamic\_protocol.py}}
+
+Отвечает за получение списка поддерживаемых динамических возможностей: \texttt{reload\_dynamic} запрашивает у устройства количество tap dance, комбинаций, key overrides и alt repeat entries, а также битовую маску дополнительных фич (\texttt{caps\_word}, \texttt{layer\_lock} и т.п.).
+
+Метод протокола динамических возможностей представлены в таблице \ref{dynamic-protocol:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Метод протокола динамических возможностей\label{dynamic-protocol:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	reload\_dynamic & Нет аргументов & Запрашивает у устройства количество записей каждого типа и поддерживаемые фичи. \\
+	\hline
+\end{xltabular}
+
+\subsection{Пакет \texttt{config}}
+
+\subsubsection{Модуль \texttt{basic\_config.py}}
+
+Абстрактный базовый класс \texttt{BasicConfig} (наследник \texttt{QVBoxLayout}) для всех редакторов. Определяет методы \texttt{valid()}, \texttt{rebuild(device)}, \texttt{activate()}, \texttt{deactivate()}.
+
+Методы класса \texttt{BasicConfig} представлены в таблице \ref{BasicConfig:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{BasicConfig}\label{BasicConfig:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	valid & Нет аргументов & Возвращает \texttt{True}, если редактор может работать с текущим устройством. \\
+	\hline
+	rebuild & device & Перестраивает интерфейс на основе данных устройства. \\
+	\hline
+	activate / deactivate & Нет аргументов & Вызывается при переключении вкладки для захвата/освобождения ресурсов. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{keymap\_editor.py}}
+
+Класс \texttt{KeymapEditor} отображает графическое представление клавиатуры (\texttt{KeyboardWidget}), позволяет переключать слои, выбирать отдельные клавиши и назначать им коды.
+
+Методы класса \texttt{KeymapEditor} представлены в таблице \ref{tab:keymapeditor}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{KeymapEditor}\label{tab:keymapeditor}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:keymapeditor}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild & device & Создаёт кнопки слоёв, передаёт данные о клавишах в \texttt{KeyboardWidget}. \\
+	\hline
+	set\_key & keycode & Присваивает выбранной клавише указанный код (поддерживает маскированные коды). \\
+	\hline
+	switch\_layer & idx & Переключает текущий отображаемый слой. \\
+	\hline
+	refresh\_layer\_\newline display & Нет аргументов & Обновляет текст на всех клавишах согласно текущему слою и переопределениям раскладки. \\
+	\hline
+	on\_keycode\_\newline changed & code & Обработчик выбора кода из панели \texttt{KeycodeTabs}. \\
+	\hline
+	save\_layout & Нет аргументов & Возвращает сериализованную раскладку (вызов \texttt{Keyboard.save\_layout}). \\
+	\hline
+	restore\_layout & data & Восстанавливает раскладку из JSON. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{layout\_editor.py}}
+
+Класс \texttt{LayoutEditor} управляет аппаратными опциями раскладки (layout options), которые задаются в JSON-определении (флаги типа boolean или выбор из списка). Опции сохраняются в \texttt{Keyboard.layout\_options} и влияют на отображение переключаемых частей клавиатуры.
+
+Методы класса \texttt{LayoutEditor} представлены в таблице \ref{LayoutEditor:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{LayoutEditor}\label{LayoutEditor:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild & device & Создаёт элементы управления (чекбоксы, комбобоксы) на основе \texttt{layout\_labels}. \\
+	\hline
+	pack & Нет аргументов & Возвращает упакованные в целое число значения всех опций. \\
+	\hline
+	unpack & value & Устанавливает опции из целого числа. \\
+	\hline
+	get\_choice & index & Возвращает значение опции по индексу. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_recorder.py}}
+
+Класс \texttt{MacroRecorder} (вкладка «Macros») позволяет создавать и редактировать макросы, записывать их с клавиатуры, оптимизировать. Использует виджеты \texttt{MacroTab} и \texttt{MacroLine}.
+
+Методы класса \texttt{MacroRecorder} представлены в таблице \ref{MacroRecorder:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MacroRecorder}\label{MacroRecorder:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild & device & Создаёт вкладки для каждого макроса, загружает текущие макросы. \\
+	\hline
+	serialize / deserialize & Нет аргументов / data & Преобразование макросов в бинарный буфер и обратно. \\
+	\hline
+	on\_record & tab, append & Начинает интерактивную запись макроса. \\
+	\hline
+	on\_keystroke & keystroke & Преобразует перехваченное нажатие в \texttt{KeyDown/Up/Tap/String}. \\
+	\hline
+	on\_save & Нет аргументов & Разблокирует клавиатуру и отправляет макросы. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{combo\_editor.py}}
+
+Класс \texttt{ComboEditor} (вкладка «Combos») позволяет настраивать комбинации из нескольких одновременно нажатых клавиш.
+
+Методы класса \texttt{ComboEditor} представлены в таблице \ref{ComboEditor:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{ComboEditor}\label{ComboEditor:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild\_ui & Нет аргументов & Создаёт вкладки для каждой поддерживаемой комбинации. \\
+	\hline
+	load & data & Загружает комбинацию из кортежа (4 клавиши-триггера + выходная клавиша). \\
+	\hline
+	save & Нет аргументов & Возвращает текущие значения комбинации в виде кортежа. \\
+	\hline
+	on\_key\_changed & Нет аргументов & Отправляет изменённую комбинацию на устройство через \texttt{Keyboard.combo\_set}. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{tap\_dance\_editor.py}}
+
+Класс \texttt{TapDanceEditor} (вкладка «Tap Dance») управляет действиями на одно нажатие, двойное нажатие, удержание и tap+hold.
+
+Методы класса \texttt{TapDanceEditor} представлены в таблице \ref{TapDanceEditor:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{TapDanceEditor}\label{TapDanceEditor:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild\_ui & Нет аргументов & Создаёт вкладки для каждого tap dance. \\
+	\hline
+	load & data & Загружает данные степа: четыре действия и значение тайминга. \\
+	\hline
+	save & Нет аргументов & Возвращает кортеж (действие на тап, на удержание, на двойной тап, на тап+удержание, тайминг). \\
+	\hline
+	on\_save & Нет аргументов & Отправляет все изменённые tap dance на устройство. \\
+	\hline
+	on\_revert & Нет аргументов & Отменяет локальные изменения, перезагружая данные с клавиатуры. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{key\_override\_editor.py}}
+
+Класс \texttt{KeyOverride} (вкладка «Key Overrides») настраивает условную замену клавиш с учётом модификаторов и слоёв.
+
+Методы класса \texttt{KeyOverride} представлены в таблице \ref{KeyOverride:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{KeyOverride}\label{KeyOverride:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild\_ui & Нет аргументов & Создаёт вкладки для каждого переопределения (до 128). \\
+	\hline
+	load & ko & Загружает запись переопределения. \\
+	\hline
+	save & Нет аргументов & Возвращает объект \texttt{KeyOverrideEntry}. \\
+	\hline
+	on\_change & Нет аргументов & Отправляет изменённое переопределение на устройство. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{alt\_key\_repeat.py}}
+
+Класс \texttt{AltRepeatKey} (вкладка «Alt Repeat Key») конфигурирует альтернативный повтор: клавиша, заменяющая последнюю нажатую, разрешённые модификаторы и опции.
+
+Методы класса \texttt{AltRepeatKey} представлены в таблице \ref{AltRepeatKey:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{AltRepeatKey}\label{AltRepeatKey:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild\_ui & Нет аргументов & Создаёт вкладки для каждой альтернативной клавиши повтора. \\
+	\hline
+	load & arep & Загружает запись альтернативного повтора. \\
+	\hline
+	save & Нет аргументов & Возвращает объект \texttt{AltRepeatEntry}. \\
+	\hline
+	on\_change & Нет аргументов & Отправляет изменения на устройство. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{rgb\_control.py}}
+
+Класс \texttt{RGBControl} объединяет управление тремя типами подсветки: QMK Backlight, QMK RGBLight и Custom RGB.
+
+Методы класса \texttt{RGBControl} представлены в таблице \ref{RGBControl:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{RGBControl}\label{RGBControl:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild & device & Определяет поддерживаемые типы подсветки и создаёт обработчики. \\
+	\hline
+	update\_from\_\newline keyboard & Нет аргументов & Запрашивает текущие значения с устройства и обновляет интерфейс. \\
+	\hline
+	set\_qmk\_rgblight\newline \_brightness / effect & value, index & Отправляет команды изменения яркости/эффекта RGBLight. \\
+	\hline
+	set\_custom\_rgb\_\newline mode / speed / color & value & Управляет Custom RGB. \\
+	\hline
+	save\_rgb & Нет аргументов & Сохраняет настройки подсветки в EEPROM клавиатуры. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{qmk\_settings\_editor.py}}
+
+Класс \texttt{QmkSettingsEditor} динамически строит интерфейс на основе файла \texttt{qmk\_settings.json}. Поддерживает boolean и integer настройки.
+
+Методы класса \texttt{QmkSettingsEditor} представлены в таблице \ref{qmkseteditor:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{QmkSettingsEditor}\label{qmkseteditor:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	recreate\_gui & Нет аргументов & Создаёт вкладки и элементы управления согласно \texttt{supported\_settings}. \\
+	\hline
+	reload\_settings & Нет аргументов & Запрашивает все настройки с клавиатуры и обновляет интерфейс. \\
+	\hline
+	prepare\_settings & Нет аргументов & Собирает словарь QSID → значение из текущих виджетов. \\
+	\hline
+	save\_settings & Нет аргументов & Отправляет изменённые настройки на устройство. \\
+	\hline
+	reset\_settings & Нет аргументов & Сбрасывает все настройки QMK к значениям по умолчанию. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{matrix\_tester.py}}
+
+Класс \texttt{MatrixTester} (вкладка «Matrix tester») периодически опрашивает состояние матрицы клавиш и отображает нажатые клавиши.
+
+Методы класса \texttt{MatrixTester} представлены в таблице \ref{matrixtester:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MatrixTester}\label{matrixtester:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	rebuild & device & Загружает матрицу из определения клавиатуры. \\
+	\hline
+	matrix\_poller & Нет аргументов & Вызывается по таймеру, получает состояние матрицы и обновляет виджеты. \\
+	\hline
+	unlock & Нет аргументов & Вызывает диалог разблокировки. \\
+	\hline
+	activate / deactivate & Нет аргументов & Захватывает/освобождает ввод и управляет таймером. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{firmware\_updater.py}}
+
+Реализует прошивку клавиатуры из файла \texttt{.vfw}. Проверяет сигнатуру, SHA256, UID, отправляет данные блоками по 64 байта в загрузчик.
+
+Функции модуля \texttt{firmware\_updater.py} представлены в таблице \ref{firmware-updater:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Функции модуля \texttt{firmware\_updater.py}\label{firmware-updater:table}}\\
+	\hline \centrow Название функции & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	cmd\_flash & device, firmware, enable\_insecure, log\_cb, progress\_cb, complete\_cb, error\_cb & Выполняет прошивку: проверка, отправка, перезагрузка. \\
+	\hline
+	on\_click\_flash & Нет аргументов & Обработчик кнопки «Flash» (чтение файла, разблокировка, запуск потока). \\
+	\hline
+	log & line & Добавляет строку в лог с временной меткой. \\
+	\hline
+	lock\_ui / unlock\_ui & force\_refresh & Блокирует элементы управления на время прошивки. \\
+	\hline
+	find\_device\_with\newline \_uid & cls, uid & Ищет устройство (класс) по UID (используется после перезагрузки). \\
+	\hline
+\end{xltabular}
+
+\subsection{Пакет \texttt{widgets}}
+
+\subsubsection{Модуль \texttt{keyboard\_widget.py}}
+
+Класс \texttt{KeyboardWidget} – основной виджет для отрисовки клавиатуры по KLE-описанию. Поддерживает масштабирование, выделение клавиш, отображение нажатых/зажатых состояний, маскированных кодов (два уровня текста). Содержит внутренние классы \texttt{KeyWidget} и \texttt{EncoderWidget}.
+
+Методы класса \texttt{KeyboardWidget} представлены в таблице \ref{keyboardwidget:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{KeyboardWidget}\label{keyboardwidget:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	set\_keys & keys, encoders & Загружает описание клавиш и энкодеров для отображения. \\
+	\hline
+	update\_layout & Нет аргументов & Пересчитывает позиции всех виджетов в соответствии с текущим масштабом и выбранными опциями. \\
+	\hline
+	paintEvent & event & Рисует клавиатуру с учётом состояний (активная, нажатая, подсвеченная). \\
+	\hline
+	hit\_test & pos & Определяет, какая клавиша и её часть (маска или нет) находится в точке \texttt{pos}. \\
+	\hline
+	select\_next & Нет аргументов & Переключает выбор на следующую клавишу (по порядку). \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{key\_widget.py}}
+
+Класс \texttt{KeyWidget} – компактный виджет для выбора клавиши. При клике открывает панель \texttt{KeycodeTabs}. Поддерживает фильтрацию кодов (только базовые для внутренней части маскированной клавиши).
+
+Методы класса \texttt{KeyWidget} представлены в таблице \ref{kewwidget:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{KeyWidget}\label{kewwidget:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	set\_keycode & kc & Устанавливает код клавиши и обновляет отображение. \\
+	\hline
+	set\_keycode\_\newline filter & keycode\_filter & Устанавливает функцию-фильтр для допустимых кодов. \\
+	\hline
+	on\_keycode\_\newline changed & keycode & Обрабатывает выбор кода из панели (учитывает маскирование). \\
+	\hline
+	mousePressEvent & ev & Открывает панель \texttt{KeycodeTabs} при клике. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{square\_button.py}}
+
+Класс \texttt{SquareButton} (наследник \texttt{QPushButton}) с квадратным sizeHint, масштабируемым относительно высоты шрифта. Поддерживает перенос текста (word wrap) через вложенный \texttt{QLabel}.
+
+Методы класса \texttt{SquareButton} представлены в таблице \ref{square-button:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{SquareButton}\label{square-button:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	setRelSize & ratio & Задаёт относительный размер кнопки относительно высоты шрифта. \\
+	\hline
+	setWordWrap & state & Включает/отключает перенос текста. \\
+	\hline
+	sizeHint & Нет аргументов & Возвращает квадратный размер кнопки. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{flow\_layout.py}}
+
+Класс \texttt{FlowLayout} – менеджер компоновки, который автоматически переносит элементы на следующую строку при нехватке места по горизонтали. Используется в панелях кнопок ключей и в редакторах макросов.
+
+Методы класса \texttt{FlowLayout} представлены в таблице \ref{flow-layout:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{FlowLayout}\label{flow-layout:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	addItem & item & Добавляет элемент в компоновку. \\
+	\hline
+	heightForWidth & width & Вычисляет высоту, необходимую для размещения всех элементов при заданной ширине. \\
+	\hline
+	doLayout & rect, testOnly & Выполняет фактическое размещение элементов. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{tab\_widget\_keycodes.py}}
+
+Класс \texttt{TabWidgetWithKeycodes} – наследник \texttt{QTabWidget}, который закрывает панель \texttt{KeycodeTabs} при переключении вкладки или клике вне её.
+
+Методы класса  представлены в таблице \texttt{TabWidgetWithKeycodes\ref{tab-keycodes:table}}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{TabWidgetWithKeycodes\label{tab-keycodes:table}}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	mouseRelease\newline Event & ev & Закрывает панель \texttt{KeycodeTabs}. \\
+	\hline
+	on\_changed & index & Закрывает панель \texttt{KeycodeTabs} при смене вкладки. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Вспомогательные виджеты}
+
+Модули \texttt{checkbox\_no\_padding.py} (убирает отступы у \texttt{QCheckBox}), \texttt{clickable\_label.py} (\texttt{QLabel} с сигналом \texttt{clicked}), \texttt{display\_keyboard.py} (статическое отображение клавиатуры для выбора кодов), \texttt{editor\_container.py} (контейнер для вкладок, передающий клик редактору). Каждый из них реализует простую специализированную функциональность, таблицы для них не приводятся ввиду тривиальности.
+
+\subsection{Пакет \texttt{macro}}
+
+\subsubsection{Модуль \texttt{macro\_action.py}}
+
+Определяет классы действий макроса: \texttt{ActionText}, \texttt{ActionTap}, \texttt{ActionDown}, \texttt{ActionUp}, \texttt{ActionDelay}. Каждый содержит методы \texttt{serialize} (в бинарный вид), \texttt{save} (в список для JSON), \texttt{restore}.
+
+Методы классов действий макросов представлены в таблице \ref{macro-action:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы классов действий макросов\label{macro-action:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	serialize & comm\_protocol & Преобразует действие в бинарный буфер для отправки на устройство. \\
+	\hline
+	save & Нет аргументов & Возвращает список, сериализуемый в JSON. \\
+	\hline
+	restore & act & Восстанавливает действие из JSON-данных. \\
+	\hline
+	\_\_eq\_\_ & other & Сравнивает два действия. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_action\_ui.py}}
+
+Содержит классы UI для каждого типа действия (\texttt{ActionTextUI}, \texttt{ActionTapUI}, …). Они создают соответствующие виджеты (поле ввода для текста, последовательность кнопок для \texttt{Tap/Down/Up}, спинбокс для задержки). Используются в \texttt{MacroLine}.
+
+Классы UI действий макросов представлены в таблице \ref{macro-action-ui:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Классы UI действий макросов\label{macro-action-ui:table}}\\
+	\hline \centrow Название класса & \centrow Методы & \centrow Описание \\
+	\hline
+	\finishhead
+	ActionTextUI & \texttt{\_\_init\_\_, insert, remove, delete, on\_change} & Редактор текстовой строки. \\
+	\hline
+	ActionSequence\newline UI & \texttt{\_\_init\_\_, recreate\_sequence, on\_add, on\_change} & Базовый класс для последовательностей клавиш (Tap/Down/Up). \\
+	\hline
+	ActionDelayUI & \texttt{\_\_init\_\_, insert, remove, delete, on\_change} & Редактор задержки (SpinBox). \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_key.py}}
+
+Классы для представления захваченных при записи нажатий: \texttt{KeyDown}, \texttt{KeyUp}, \texttt{KeyTap}, \texttt{KeyString}. Служат промежуточным звеном между рекордером и действиями.
+
+Классы модуля \texttt{macro\_key.py} представлены в таблице \ref{macro-key:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Классы модуля \texttt{macro\_key.py}\label{macro-key:table}}\\
+	\hline \centrow Название класса & \centrow Атрибуты & \centrow Описание \\
+	\hline
+	\finishhead
+	KeyDown & keycode & Представляет нажатие клавиши. \\
+	\hline
+	KeyUp & keycode & Представляет отпускание клавиши. \\
+	\hline
+	KeyTap & keycode & Представляет нажатие и немедленное отпускание. \\
+	\hline
+	KeyString & string & Представляет последовательность печатных символов. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_optimizer.py}}
+
+Функции оптимизации макросов: \texttt{remove\_repeats} (удаление дублирующихся нажатий), \texttt{replace\_with\_tap} (замена последовательности Down+Up на Tap), \texttt{replace\_with\_string} (замена нескольких Tap печатных символов на один \texttt{KeyString}).
+
+Функции модуля \texttt{macro\_optimizer.py} представлены в таблице \ref{macro-optimizer:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Функции модуля \texttt{macro\_optimizer.py}\label{macro-optimizer:table}}\\
+	\hline \centrow Название функции & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	remove\_repeats & sequence & Удаляет подряд идущие одинаковые нажатия или отпускания. \\
+	\hline
+	replace\_with\_tap & sequence & Заменяет пары Down+Up на Tap. \\
+	\hline
+	replace\_with\_\newline string & sequence & Группирует подряд идущие печатные Tap в KeyString. \\
+	\hline
+	macro\_optimize & sequence & Применяет все три оптимизации последовательно. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_recorder\_linux.py}}
+
+Класс \texttt{LinuxRecorder} (только для Linux) запускает привилегированный процесс через \texttt{pkexec}, который перехватывает глобальные нажатия клавиш с помощью библиотеки \texttt{keyboard}. Полученные события преобразуются в \texttt{KeyDown/KeyUp} и передаются сигналом \texttt{keystroke}.
+
+Методы класса \texttt{LinuxRecorder} представлены в таблице \ref{linuxrecorder:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{LinuxRecorder}\label{linuxrecorder:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	start & Нет аргументов & Запускает процесс записи (показывает окно «Stop recording»). \\
+	\hline
+	stop & Нет аргументов & Останавливает запись и завершает процесс. \\
+	\hline
+	on\_output & Нет аргументов & Читает строки из stdout процесса, парсит события и генерирует сигнал \texttt{keystroke}. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_tab.py}}
+
+Класс \texttt{MacroTab} – вкладка редактора одного макроса. Содержит кнопки «Record macro», «Add action», «Tap Enter», «Open Text Editor». Управляет списком строк (\texttt{MacroLine}), сериализует/десериализует макрос в JSON для текстового редактора.
+
+Методы класса \texttt{MacroTab} представлены в таблице \ref{macro-tab:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MacroTab}\label{macro-tab:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	add\_action & act & Добавляет новое действие в конец макроса. \\
+	\hline
+	clear & Нет аргументов & Удаляет все действия из макроса. \\
+	\hline
+	on\_move & obj, offset & Перемещает строку действия вверх/вниз. \\
+	\hline
+	on\_text\_window & Нет аргументов & Открывает текстовый редактор для JSON-представления макроса. \\
+	\hline
+	actions & Нет аргументов & Возвращает список действий макроса. \\
+	\hline
+\end{xltabular}
+
+\subsubsection{Модуль \texttt{macro\_line.py}}
+
+Класс \texttt{MacroLine} – строка редактора макроса: содержит кнопки перемещения (▲/▼), выпадающий список типа действия, кнопку удаления (×) и виджет самого действия.
+
+Методы класса \texttt{MacroLine} представлены в таблице \ref{macro-line:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MacroLine}\label{macro-line:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	insert & row & Вставляет строку в компоновку редактора. \\
+	\hline
+	remove & Нет аргументов & Удаляет строку из компоновки. \\
+	\hline
+	on\_change\_type & Нет аргументов & Заменяет тип действия при выборе в комбобоксе. \\
+	\hline
+	on\_remove\_\newline clicked & Нет аргументов & Удаляет строку. \\
+	\hline
+	on\_move\_up / on\_move\_down & Нет аргументов & Перемещает строку. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{keycode\_tabs.py}}
+
+Класс \texttt{KeycodeTabs} – панель с вкладками для выбора кодов клавиш. Содержит \texttt{FilteredKeycodeTabs} (с фильтром всех кодов или только базовых). При клике на клавишу генерирует сигнал \texttt{keycode\_changed}. Поддерживает режим «tray» – плавающее окно, которое появляется при выборе \texttt{KeyWidget}.
+
+Методы класса \texttt{KeycodeTabs} представлены в таблице \ref{keycode-tabs:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{KeycodeTabs}\label{keycode-tabs:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	recreate\_keycode\newline \_buttons & Нет аргументов & Перестраивает все кнопки клавиш в соответствии с текущим фильтром. \\
+	\hline
+	set\_keycode\_\newline filter & keycode\_filter & Устанавливает фильтр (все коды / только базовые). \\
+	\hline
+	open\_tray & target, keycode\_filter & Открывает плавающее окно выбора клавиш для целевого виджета. \\
+	\hline
+	close\_tray & Нет аргументов & Закрывает плавающее окно. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{themes.py}}
+
+Класс \texttt{Theme} предоставляет набор цветовых палитр (Light, Dark, Arc, Nord, Dracula, Catppuccin и др.). Метод \texttt{set\_theme} применяет палитру ко всему приложению через \texttt{QApplication.setPalette}. Настройка сохраняется в \texttt{QSettings}.
+
+Методы класса \texttt{Theme} представлены в таблице \ref{themes:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{Theme}\label{themes:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	set\_theme & theme & Применяет цветовую палитру, соответствующую имени \texttt{theme}, ко всему приложению. \\
+	\hline
+	get\_theme & Нет аргументов & Возвращает имя текущей темы. \\
+	\hline
+	mask\_light\_factor & Нет аргументов & Возвращает коэффициент осветления для области маски (внутренней части маскированной клавиши). \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{security\_dialog.py}}
+
+Класс \texttt{Unlocker} – модальный диалог, требующий от пользователя одновременного нажатия нескольких физических клавиш для перевода клавиатуры в разблокированное состояние.
+
+Методы класса \texttt{Unlocker} представлены в таблице \ref{security:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{Unlocker}\label{security:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	unlock & keyboard & Статический метод: отображает диалог, ожидает завершения, возвращает успех. \\
+	\hline
+	perform\_unlock & Нет аргументов & Отправляет команду начала разблокировки, запускает таймер опроса. \\
+	\hline
+	unlock\_poller & Нет аргументов & Периодически опрашивает статус, обновляет прогресс-бар, закрывает диалог при успехе. \\
+	\hline
+	update\_reference & Нет аргументов & Подсвечивает на миниатюре клавиши, которые необходимо удерживать. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{utils.py}}
+
+Содержит вспомогательные функции:
+\begin{itemize}
+	\item \texttt{hid\_send} – отправка HID-отчёта (дублирует одноимённую из \texttt{hid\_comm.py}, но используется в разных контекстах);
+	\item \texttt{find\_custom\_devices} – поиск устройств по magic-строкам, legacy-стеку, sideload;
+	\item \texttt{chunks} – разбиение буфера на части;
+	\item \texttt{pad\_for\_bootloader} – дополнение сообщения до 64 байт нулями;
+	\item \texttt{init\_logger} – настройка ротируемого логгера;
+	\item \texttt{make\_scrollable} – оборачивание компоновки в \texttt{QScrollArea};
+	\item \texttt{KeycodeDisplay} – класс для отображения текста на клавишах с учётом выбранной раскладки и маскированных кодов.
+\end{itemize}
+
+Функции и классы модуля \texttt{utils.py} представлены в таблице \ref{utils:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Функции и классы модуля \texttt{utils.py}\label{utils:table}}\\
+	\hline \centrow Название & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	find\_custom\_\newline devices & legacy\_stack, sideload\_vid, sideload\_pid, quiet & Возвращает список объектов устройств. \\
+	\hline
+	chunks & data, sz & Генератор, разбивающий \texttt{data} на куски размера \texttt{sz}. \\
+	\hline
+	pad\_for\_\newline bootloader & msg & Дополняет сообщение нулями до 64 байт. \\
+	\hline
+	init\_logger & Нет аргументов & Настраивает логгирование в файл. \\
+	\hline
+	make\_scrollable & layout & Оборачивает компоновку в \texttt{QScrollArea}. \\
+	\hline
+	KeycodeDisplay\newline .get\_label & code & Возвращает текст для отображения на клавише. \\
+	\hline
+	KeycodeDisplay\newline .set\_keymap\_\newline override & override & Устанавливает активную раскладку отображения. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{main\_window.py}}
+
+Главное окно приложения (\texttt{MainWindow}) содержит комбобокс выбора устройства, панель вкладок с редакторами, меню (Файл, Безопасность, Тема, Справка).
+
+Методы класса \texttt{MainWindow} представлены в таблице \ref{tab:mainwindow}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{MainWindow}\label{tab:mainwindow}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tab:mainwindow}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	on\_devices\_\newline updated & devices, hard\_refresh & Обновляет комбобокс устройств, скрывает/показывает сообщение об отсутствии устройств. \\
+	\hline
+	on\_device\_\newline selected & Нет аргументов & Переключает текущее устройство, перестраивает все редакторы. \\
+	\hline
+	rebuild & Нет аргументов & Перезагружает все редакторы для выбранного устройства. \\
+	\hline
+	refresh\_tabs & Нет аргументов & Обновляет набор вкладок согласно поддерживаемым возможностям клавиатуры. \\
+	\hline
+	change\_\newline keyboard\_\newline layout & index & Изменяет языковую раскладку отображения клавиш. \\
+	\hline
+	set\_theme & theme & Применяет выбранную цветовую тему. \\
+	\hline
+	unlock\_keyboard / lock\_keyboard & Нет аргументов & Вызывает диалог разблокировки или отправляет команду блокировки. \\
+	\hline
+	on\_layout\_load / on\_layout\_save & Нет аргументов & Загружает/сохраняет файлы \texttt{.vil} (раскладка, макросы, настройки). \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{text\_editor.py}}
+
+Класс \texttt{TextboxWindow} – диалог с многострочным текстовым полем, предназначенный для редактирования JSON-представления макросов. Поддерживает импорт/экспорт файлов, копирование/вставку.
+
+Методы класса \texttt{TextboxWindow} представлены в таблице \ref{TextboxWindow:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Методы класса \texttt{TextboxWindow}\label{TextboxWindow:table}}\\
+	\hline \centrow Название метода & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	getText & Нет аргументов & Возвращает содержимое текстового поля. \\
+	\hline
+	on\_apply & Нет аргументов & Закрывает диалог с кодом \texttt{Accept}. \\
+	\hline
+	on\_copy / on\_paste & Нет аргументов & Копирует/вставляет текст. \\
+	\hline
+	on\_export / on\_import & Нет аргументов & Сохраняет/загружает текст в файл. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модули \texttt{about\_device.py}, \texttt{custom\_code.py}, \texttt{custom\_code\_dialog.py}}
+
+\begin{itemize}
+	\item \texttt{about\_device.py} – диалог «О устройстве», отображающий информацию о VID/PID, версиях протоколов, количестве макросов, tap dance, комбинаций и поддержке фич.
+	\item \texttt{custom\_code.py} – функции для создания сложных кодов клавиш (например, \texttt{LSFT(KC\_A)}) с использованием синтаксического анализатора \texttt{simpleeval}. Определяет функции-обёртки: \texttt{LCTL}, \texttt{LSFT}, \texttt{MT}, \texttt{LT}, \texttt{TD} и т.п.
+	\item \texttt{custom\_code\_dialog.py} – диалог для ручного ввода произвольного выражения (например, \texttt{LSFT(KC\_B)}). Отображает вычисленное значение и проверяет корректность.
+\end{itemize}
+
+Классы и функции модулей \texttt{about\_device.py}, \texttt{custom\_code.py}, \texttt{custom\_code\_dialog.py} представлены в таблице \ref{about-device:table}.
+
+\begin{xltabular}{\textwidth}{|p{3.5cm}|p{3.5cm}|>{\setlength{\baselineskip}{0.7\baselineskip}}X|}
+	\caption{Классы и функции модулей \texttt{about\_device.py}, \texttt{custom\_code.py}, \texttt{custom\_code\_dialog.py}\label{about-device:table}}\\
+	\hline \centrow Название & \centrow Аргументы & \centrow Описание \\
+	\hline
+	\finishhead
+	AboutDevice & device & Конструктор, заполняет диалог информацией об устройстве. \\
+	\hline
+	CustomKeyCode\newline .decode & s & Разбирает строку-выражение (например, \texttt{"LSFT(KC\_A)"}) в числовой код клавиши. \\
+	\hline
+	CustomCode\newline Dialog & initial & Диалог для ручного ввода выражения, отображает вычисленное значение. \\
+	\hline
+\end{xltabular}
+
+\subsection{Модуль \texttt{layout\_presets.py} и пакет \texttt{layouts}}
+
+Модуль \texttt{layout\_presets.py} импортирует словари переопределения надписей из файлов пакета \texttt{layouts} (например, \texttt{german.py}, \texttt{french.py}, \texttt{colemak.py} и др.). Экспортирует список \texttt{LAYOUT\_PRESETS} – кортежи (имя раскладки, словарь отображений QMK ID → строка). Выбранная раскладка применяется через \texttt{KeycodeDisplay.set\_keymap\_override}. Таблицы не требуются, так как модуль не содержит функций или классов – только данные.
+
+\subsection{Тестирование программной системы}
+
+В ходе системного тестирования программного продукта, предназначенного для настройки сплит-клавиатур, применялись разные методы и инструменты. Результаты проведенного тестирования отражены в данном разделе посредством демонстраций экранных изображений выполненных операций.
+
+Функция: загрузка файла конфигурации.
+Условия: пользователь должен перейти на вкладку "<File">, выбрать файл формата .vial (желательно ранее созданный профиль) с диска своего компьютера и загрузить его в программу.
+Входные данные: выбранный пользователем файл конфигурации (.vial), содержащий ранее настроенную раскладку клавиш, слои и макросы.
+Результат: программа обработает указанный файл и восстановит предыдущую конфигурацию клавиатуры, включающую всю сохранённую информацию о расположении клавиш, слоях, макросах и анимации подсветки. После загрузки изменения сразу вступают в силу, и клавиатура готова к работе с новыми параметрами (рисунки \ref{test1_1:image} -- \ref{test1_2:image}). 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Загрузка файла конфигурации.png}
+	\caption{Загрузка файла конфигурации}
+	\label{test1_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат загрузки файла конфигурации.png}
+	\caption{Результат загрузки файла конфигурации}
+	\label{test1_2:image}
+\end{figure}
+
+Функция: настройка раскладки клавиатуры.
+Условия: пользователь должен перейти на вкладку "<Keyboard Layout">, выбрать нужную схему расположения клавиш (например, стандартный ANSI или альтернативные варианты вроде Colemak или Dvorak), задать слой (Layer), к которому относятся кнопки, и определить назначение каждой клавиши индивидуально.
+Входные данные: предпочтения пользователя относительно схемы размещения клавиш, выбранного слоя и индивидуальных настроек отдельных кнопок.
+Результат: приложение сохраняет внесённые изменения в память клавиатуры, обновляя её текущую раскладку. После сохранения новая схема становится активной немедленно, и клавиатура перестаёт реагировать на предыдущие установки. Пользователь получает возможность полноценно пользоваться выбранной раскладкой и активированными функциями, такими как смена слоя или запуск макросов (рисунки \ref{test2_1:image} -- \ref{test2_4:image}). 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры (нулевой слой).png}
+	\caption{Результат настройки раскладки клавиатуры (нулевой слой)}
+	\label{test2_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры (первый слой).png}
+	\caption{Результат настройки раскладки клавиатуры (первый слой)}
+	\label{test2_2:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры (второй слой).png}
+	\caption{Результат настройки раскладки клавиатуры (второй слой)}
+	\label{test2_3:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры (третий слой).png}
+	\caption{Результат настройки раскладки клавиатуры (третий слой)}
+	\label{test2_4:image}
+\end{figure}
+
+Функция: защита конфигурации клавиатуры.
+Условия: пользователь должен перейти на вкладку "<Security">, нажать Unlock, зажать определённые клавиши, которые будут подсвечены в окне, подождать, пока клавиатура не будет разблокирована для дальнейших взаимодействий.
+Входные данные: нажатие кнопки Unlock, зажатые клавиши
+Результат: клавиатура разблокирована для дальнейших взаимодействий (рисунки \ref{test3_1:image} -- \ref{test3_3:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{защита конфигурации клавиатуры (клавиатура заблокирована).png}
+	\caption{защита конфигурации клавиатуры (клавиатура заблокирована)}
+	\label{test3_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Процесс разблокировки клавиатуры.png}
+	\caption{Процесс разблокировки клавиатуры}
+	\label{test3_2:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Клавиатура разблокирована.png}
+	\caption{Клавиатура разблокирована}
+	\label{test3_3:image}
+\end{figure}
+
+Функция: выбор цветовой темы.
+Условия: пользователь должен перейти на вкладку "<Theme">, выбрать понравившуюся цветовую палитру из предложенных вариантов или настроить собственную комбинацию цветов.
+Входные данные: предпочтительная цветовая схема или индивидуальный подбор оттенков подсветки клавиатуры.
+Результат: после выбора или задания собственных предпочтений, клавиатура моментально принимает новую расцветку подсветки, создавая привлекательное световое оформление, соответствующее выбору пользователя. Новая тема сохраняется в памяти устройства и применяется постоянно до следующего изменения (рисунки \ref{test4_1:image} -- \ref{test4_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Выбор цветовой темы.png}
+	\caption{Выбор цветовой темы}
+	\label{test4_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат смены цветовой темы.png}
+	\caption{Результат смены цветовой темы}
+	\label{test4_2:image}
+\end{figure}
+
+Функция: создание собственной карты клавиш (Keymap).
+Условия: пользователь должен перейти на вкладку "<Keymap">, выбрать нужный слой (Layer) и назначить каждому ключу требуемое значение (символ, команду или макрос).
+Входные данные: уникальные значения, указанные пользователем для каждого ключа на каждом слое.
+Результат: после завершения процесса программирования ключей и нажатия кнопки "<Save">, созданная карта клавиш сохраняется в памяти клавиатуры. Она вступает в силу незамедлительно, и все последующие нажатия клавиш соответствуют новым назначенным командам. Таким образом, пользователь получает возможность использовать свою уникальную карту клавиш, соответствующую индивидуальным потребностям и привычкам (рисунки \ref{test5_1:image} -- \ref{test5_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Настройка раскладки клавиатуры.png}
+	\caption{Настройка раскладки клавиатуры}
+	\label{test5_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат смены цветовой темы.png}
+	\caption{Результат смены цветовой темы}
+	\label{test5_2:image}
+\end{figure}
+
+Функция: создание и управление макросами.
+Условия: пользователь должен перейти на вкладку "<Macros">, выбрать необходимую категорию макросов (текстовые команды, мультимедийные функции, игровые комбинации и др.) и задать конкретные последовательности действий, которые будут выполняться при нажатии определённых клавиш.
+Входные данные: комбинация клавиш и последовательность выполняемых действий, указанных пользователем.
+Результат: после создания и сохранения макроса, клавиатура запоминает установленную последовательность. Теперь каждое последующее нажатие указанной комбинации вызывает немедленное исполнение записанных команд. Макросы значительно ускоряют повторяющиеся операции и повышают эффективность работы пользователя (рисунки \ref{test6_1:image} -- \ref{test6_2:image}). 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Создание макроса.png}
+	\caption{Создание макроса}
+	\label{test6_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат создания макроса.png}
+	\caption{Результат создания макроса}
+	\label{test6_2:image}
+\end{figure}
+
+Функция: настройка подсветки клавиатуры.
+Условия: пользователь должен перейти на вкладку "<Lighting">, выбрать одну из предустановленных схем освещения или вручную задать интенсивность, цвет и эффекты подсветки клавиш.
+Входные данные: предпочтительные параметры подсветки, установленные пользователем.
+Результат: после внесения изменений в настройки подсветки, клавиатура мгновенно примет указанную пользователем схему. Светодиоды будут светиться нужным цветом и яркостью, подчеркивая дизайн и улучшая эстетику устройства. Новые параметры сохраняются в памяти клавиатуры и применяются автоматически каждый раз при включении питания (рисунки \ref{test7_1:image} -- \ref{test7_3:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Настройка цвета подсветки клавиатуры.png}
+	\caption{Настройка цвета подсветки клавиатуры}
+	\label{test7_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Настройка режима подсветки клавиатуры.png}
+	\caption{Настройка режима подсветки клавиатуры}
+	\label{test7_2:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки подсветки.png}
+	\caption{Результат настройки подсветки}
+	\label{test7_3:image}
+\end{figure}
+ 
+Функция: настройка поведения тап-дансов (Tap Dance).
+Условия: пользователь должен перейти на вкладку "<Tap Dance">, выбрать интересующую клавишу или сочетание клавиш и задать желаемую реакцию на количество быстрых последовательных нажатий (одинарное, двойное, тройное касание и т.п.).
+Входные данные: ключи, выбранные пользователем, и задаваемое ими поведение в зависимости от количества быстрых нажатий.
+Результат: после сохранения настроек, клавиатура начнёт распознавать указанное число быстрых нажатий одной клавиши и выполнять соответствующие действия. Например, однократное нажатие клавиши может привести к одному действию, двукратное -- к другому, и так далее. Эти реакции облегчают быстрый доступ к часто используемым действиям и улучшают производительность пользователя (рисунки \ref{test8_1:image} -- \ref{test8_2:image}). 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Настройка поведения тап-дансов (Tap Dance).png}
+	\caption{Настройка поведения тап-дансов (Tap Dance)}
+	\label{test8_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки поведения тап-дансов (Tap Dance).png}
+	\caption{Результат настройки поведения тап-дансов (Tap Dance)}
+	\label{test8_2:image}
+\end{figure}
+
+Функция: создание комбинаций клавиш (Combos).
+Условия: пользователь должен перейти на вкладку "<Combos">, выбрать нужные сочетания клавиш и задать действия, которые будут выполнены при одновременном нажатии указанных клавиш.
+Входные данные: комбинации клавиш, заданные пользователем, и связанные с ними команды или функции.
+Результат: после настройки и сохранения комбинации, клавиатура начнет интерпретировать одновременно нажатые клавиши как единую команду. Например, одновременное нажатие двух клавиш может вызывать определенную функцию операционной системы или специализированное приложение. Комбинации помогают повысить скорость работы и упростить взаимодействие с компьютером (рисунки \ref{test9_1:image} -- \ref{test9_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Создание комбинаций клавиш (Combos).png}
+	\caption{Создание комбинаций клавиш (Combos)}
+	\label{test9_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры2.png}
+	\caption{Результат настройки раскладки клавиатуры}
+	\label{test9_2:image}
+\end{figure}
+
+Функция: работа с несколькими слоями клавиатуры (Layers).
+Условия: пользователь должен перейти на вкладку "<Layers">, выбрать основной слой (обычно обозначается Layer 0) и дополнительно добавить или удалить вспомогательные слои (Layer 1, Layer 2 и т.д.). Для каждого слоя можно отдельно задать своё расположение клавиш и функциональность.
+Входные данные: необходимые пользователю слои и их настройки.
+Результат: после сохранения новых слоёв клавиатура сможет переключаться между разными наборами символов и функциональных клавиш. Переключение между слоями осуществляется путём нажатия специальных клавиш-модификаторов ("<Fn">), позволяющих временно или длительно переходить на другой слой. Такая гибкая организация улучшает адаптацию клавиатуры под различные сценарии использования (рисунки \ref{test10_1:image} -- \ref{test10_4:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Работа с несколькими слоями клавиатуры (Layers) (нулевой слой).png}
+	\caption{Работа с несколькими слоями клавиатуры (Layers) (нулевой слой)}
+	\label{test10_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Работа с несколькими слоями клавиатуры (Layers) (первый слой).png}
+	\caption{Работа с несколькими слоями клавиатуры (Layers) (первый слой)}
+	\label{test10_2:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Работа с несколькими слоями клавиатуры (Layers) (второй слой).png}
+	\caption{Работа с несколькими слоями клавиатуры (Layers) (второй слой)}
+	\label{test10_3:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Работа с несколькими слоями клавиатуры (Layers) (третий слой).png}
+	\caption{Работа с несколькими слоями клавиатуры (Layers) (третий слой)}
+	\label{test10_4:image}
+\end{figure}
+
+Функция: тестирование работоспособности клавиатуры (Matrox Tester).
+Условия: пользователь должен перейти на вкладку "<Tester">, подключить клавиатуру и инициировать проверку состояния контактов клавиш и матрицы клавиатуры.
+Входные данные: подключённая клавиатура, выбранная в списке устройств, и начатая процедура проверки.
+Результат: программа осуществляет сканирование всех клавиш, выявляет возможные проблемы с контактами, наличие зависших или неисправных элементов. Тестировщик выводит отчет о состоянии клавиатуры, отмечая исправные и проблемные зоны. Если обнаружены неисправности, пользователь получит рекомендации по устранению неполадок или замене дефектных компонентов (рисунки \ref{test11_1:image} -- \ref{test11_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Тестирование работоспособности клавиатуры.png}
+	\caption{Тестирование работоспособности клавиатуры}
+	\label{test11_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки раскладки клавиатуры3.png}
+	\caption{Результат настройки раскладки клавиатуры}
+	\label{test11_2:image}
+\end{figure}
+
+Функция: переопределение значений клавиш (Key Overrides).
+Условия: пользователь должен перейти на вкладку "<Key Overrides">, выбрать целевую клавишу и задать новое действие или символ, который будет заменять стандартное поведение клавиши.
+Входные данные: название целевой клавиши и новое значение, присвоенное ей пользователем.
+Результат: после сохранения настроек, клавиатура начинает воспринимать выбранную клавишу иначе. Каждое последующее нажатие теперь будет приводить к выполнению заранее назначенной команды или вводу конкретного символа. Переопределение клавиш полезно для адаптации клавиатуры под специфичные потребности пользователя или для улучшения производительности труда (рисунки \ref{test12_1:image} -- \ref{test12_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Переопределение значений клавиш (Key Overrides).png}
+	\caption{Переопределение значений клавиш (Key Overrides)}
+	\label{test12_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат переопределение значений клавиш (Key Overrides).png}
+	\caption{Результат переопределение значений клавиш (Key Overrides)}
+	\label{test12_2:image}
+\end{figure}
+
+Функция: установка альтернативного повтора нажатия клавиши (Alt Repeat Key).
+Условия: пользователь должен перейти на вкладку "<Alt Repeat Key">, выбрать ключевую клавишу, которую необходимо заменить функцией автоповтора, и указать интервал задержки перед началом повторного срабатывания.
+Входные данные: выделенная клавиша и выбранный промежуток времени для начала автоматического повторения.
+Результат: после сохранения настроек, данная клавиша начнёт повторять своё действие автоматически, начиная через установленный пользователем временной интервал. Такой подход полезен для автоматизации некоторых рутинных задач, таких как перемещение курсора или пролистывание текста (рисунки \ref{test13_1:image} -- \ref{test13_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Установка альтернативного повтора нажатия клавиши (Alt Repeat Key).png}
+	\caption{Установка альтернативного повтора нажатия клавиши (Alt Repeat Key)}
+	\label{test13_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат установки альтернативного повтора нажатия клавиши (Alt Repeat Key).png}
+	\caption{Результат установки альтернативного повтора нажатия клавиши (Alt Repeat Key)}
+	\label{test13_2:image}
+\end{figure}
+
+Функция: настройка общих параметров QMK-прошивки (QMK Settings).
+Условия: пользователь должен перейти на вкладку "<QMK Settings">, выбрать интересующие параметры, такие как тайминги, скорость движения мыши, чувствительность колёс прокрутки и другие глобальные настройки.
+Входные данные: предпочитаемые пользователем параметры QMK-прошивки.
+Результат: после подтверждения настроек, изменения вносятся в прошивку клавиатуры и становятся активными немедленно. Общие настройки влияют на общее поведение клавиатуры, улучшив её отзывчивость и удобство использования (рисунки \ref{test14_1:image} -- \ref{test14_2:image}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Настройка общих параметров QMK-прошивки (QMK Settings).png}
+	\caption{Настройка общих параметров QMK-прошивки (QMK Settings)}
+	\label{test14_1:image}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{Результат настройки общих параметров QMK-прошивки (QMK Settings).png}
+	\caption{Результат настройки общих параметров QMK-прошивки (QMK Settings)}
+	\label{test14_2:image}
+\end{figure}

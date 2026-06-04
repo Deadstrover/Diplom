@@ -1,0 +1,1009 @@
+\section{Технический проект}
+\subsection{Словарь предметной области}
+
+На основании анализа предметной области был составлен словарь предметной области. В словаре представлены термины на русском и английском языках.
+
+В таблице \ref{dictionary:table} представлен словарь предметной области для программной части разрабатываемого программного продукта.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{3.6cm}|X|}
+	\caption{Словарь предметной области разрабатываемой программной системы\label{dictionary:table}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Термин & \centrow \setlength{\baselineskip}{0.7\baselineskip} Описание \\
+	\hline \centrow 1 & \centrow 2\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{dictionary:table}}\\
+	\hline \centrow 1 & \centrow 2\\ \hline
+	\finishhead
+	QMK (Quantum Mechanical Keyboard) & Открытое программное обеспечение (прошивка) для механической клавиатуры, позволяющее полностью контролировать и настраивать каждое действие, связанное с клавишами, слоями, подсветкой и другим функционалом. Основное преимущество QMK -- возможность глубокой кастомизации клавиатуры без необходимости знания программирования. \\ \hline
+	Ключ-код (Keycode) & Специальный идентификатор, присваиваемый физической клавише на клавиатуре. Через ключ-коды определяются действия, происходящие при нажатии той или иной клавиши. Например, стандартный ключ-код для клавиши "<A"> -- это KC\_A. \\ \hline
+	Веб-приложение (Web Application ) & Прикладное программное обеспечение, которое работает на веб-сервере, в отличие от компьютерных программ, которые запускаются локально в операционной системе устройства. \\ \hline
+	Слой (Layer) & Система, позволяющая клавиатуре обрабатывать разные функции для одной и той же клавиши в зависимости от текущего активного слоя. Переключение между слоями осуществляется специальными клавишами или сочетаниями. Например, один слой может отвечать за стандартные символы, другой -- за мультимедийные команды, третий -- за макросы и т.п. \\ \hline
+	Макрос (Macro) & Последовательность действий, задаваемых на определенную клавишу или комбинацию клавиш. Макросы могут эмулировать нажатие нескольких клавиш, запускать программы, вводить текст и многое другое. \\ \hline
+	Модификатор (Modifier) & Тип клавиш, изменяющий поведение других клавиш при их совместном нажатии. Модификаторами являются такие клавиши, как SHIFT, CTRL, ALT и др., изменяющие результат нажатия обычных клавиш (например, сочетание SHIFT+A даст заглавную букву "<A">). \\ \hline
+	Комбинация (Combo) & Возможность привязать одно действие к двум или более клавишам, нажатым одновременно. Часто используется для экономии физического пространства на клавиатуре, позволяя назначить редкие действия на сочетание редких клавиш. \\ \hline
+	Динамическая смена слоев (Dynamic Layer Change) & Способность переключаться между слоями без постоянного удерживания специальной клавиши (обычная ситуация -- MO()). При включении динамической смены слои меняются по однократному нажатию определенных клавиш. \\ \hline
+	Режим удержания (Tap-Hold Mode) & Режим, в котором реакция клавиши зависит от продолжительности её нажатия. Например, короткое нажатие вызывает одно действие, длительное удержание -- другое (это характерно для таких функций, как сочетание SHIFT+C для копирования). \\ \hline
+	Авто-поднятие (Auto-shift) & Т Автоматическое преобразование букв в верхний регистр при длительном удержании определенной клавиши (например, вместо долгого удерживания SHIFT пользователь просто зажимает клавишу и получает заглавную букву). \\ \hline
+	RGB-подсветка & Многоцветная светодиодная подсветка клавиатуры, управляемая программно через QMK. Имеет массу предустановленных анимаций и возможность индивидуального программирования освещения каждой клавиши отдельно. \\ \hline
+	Перезагрузчик (Bootloader) & Часть прошивки, отвечающая за обновление основного программного обеспечения клавиатуры. Позволяет обновить прошивку без использования специального кабеля или оборудования. \\ \hline
+	Однажды-вызванная клавиша (One-Shot Key) & Клавиша, действующая кратковременно при нажатии, освобождая руку пользователя от длительного удерживания модификаторов (например, One-Shot Shift действует, как SHIFT, только на один цикл ввода). \\ \hline
+	Microcontroller Unit (MCU) & Микроконтроллер, управляющий внутренней электроникой клавиатуры. Современные платы используют ATMega, Cortex M0/M3 или аналогичные чипы для обеспечения эффективной работы клавиатуры. \\ \hline
+	Аппаратное ускорение (Hardware acceleration) & Возможность увеличения быстродействия приложения за счет использования ресурсов видеокарты компьютера. Уменьшает нагрузку на центральный процессор и повышает отзывчивость интерфейса. \\ \hline
+	Коллизионная карта (Collision Map) & Таблица, показывающая, какие клавиши конфликтуют друг с другом физически (не могут быть нажаты одновременно из-за конструктивных особенностей клавиатуры). Используется для избежания некорректного поведения клавиш. \\ \hline
+	Обратное освещение (Backlight) & Метод считывания состояния клавиш, при котором контроллер последовательно перебирает строки и столбы виртуальной матрицы, фиксируя факт нажатия клавиш. \\ \hline
+	Firmware (прошивка) & Специальное программное обеспечение, которое устанавливается на микроконтроллер клавиатуры. Прошивка управляет работой клавиатуры, обрабатывает события нажатия клавиш и передает сигналы на компьютер. \\ \hline
+	Keymap (карта клавиш) & Расположение и назначение клавиш на клавиатуре. Карта клавиш хранит информацию о том, какую функцию выполняет каждая отдельная клавиша. В QMK карты клавиш хранятся в виде отдельных файлов (*.c или *.h), что позволяет пользователям самостоятельно настраивать назначение клавиш. \\ \hline
+	Layout (макет) & Общая схема распределения клавиш на клавиатуре. Может включать различные типы расстановки клавиш, такие как ортолинейный, сплэт, вогнутый и другие. \\ \hline
+	Dynamic Key Overwrite & Функция, позволяющая динамически изменять назначение определенной клавиши в зависимости от ситуации, модификаторов или условий. \\ \hline
+	EEPROM (энергонезависимая память) & Небольшой участок памяти, хранящийся на микроконтроллере, в котором хранится конфигурация клавиатуры (картографирование клавиш, параметры подсветки и т.п.). При сбросе прошивки содержимое EEPROM сохраняется. \\ \hline
+	Lock Mode (Режим блокировки) & Специальный режим, в котором некоторые клавиши фиксируют свое состояние ("lock"), например, Num Lock или Caps Lock. \\ \hline
+	Hotplug Switches (горячая замена свитчей) & Технология, позволяющая менять физические механизмы клавиш (свитчи) без пайки. Часто используется в DIY-клавиатурах. \\ \hline
+	Rotary Encoder (энкодер вращения) & Устройство, преобразующее вращательные движения в цифровой сигнал. Часто используется для регулировки громкости, скроллинга или смены слоев. \\ \hline
+	Python & Высокоуровневый объектно-ориентированный язык программирования, отличающийся простотой синтаксиса и богатой стандартной библиотекой. Python широко используется для разработки веб-приложений, анализа данных, научных вычислений, автоматизации процессов и создания графических интерфейсов. \\ \hline
+	PyQt/PySide & Библиотеки для создания графического интерфейса пользователя. Позволяют строить красивые и современные графические интерфейсы с удобным управлением элементами и событиями. \\ \hline
+	hidapi & библиотека для работы с устройствами ввода-вывода (USB, HID), которая позволяет взаимодействовать с физической клавиатурой и считывать/сохранять настройки прошивки. \\ \hline
+	json & стандартный модуль Python для работы с форматом JSON, используемый для чтения и записи конфигурационных файлов.
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+\subsection{Общие сведения о программно-информационной среде}
+
+Для разработки данного программного продукта был использован язык программирования Python и среда разработки Visual Studio code.
+
+Диаграмма компонентов данного программного продукта представлена на рисунке \ref{componentdiagram:image}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{componentdiagram}
+	\caption{Диаграмма компонентов}
+	\label{componentdiagram:image}
+\end{figure}
+
+Данный программный продукт состоит из 16 компонентов:
+
+\begin{enumerate}
+\item Работа с файлом. Этот модуль отвечает за работу с файлом.
+\item Переопределение ключей. Этот модуль отвечает за переопределение ключей.
+\item Безопасность. Этот модуль отвечает за безопасность.
+\item Тема. Этот модуль отвечает за тему.
+\item Подсветка. Этот модуль отвечает за подсветку.
+\item Альтернативные клавиши повтора. Этот модуль отвечает за альтернативные клавиши повтора.
+\item Раскладка клавиатуры. Этот модуль отвечает за раскладку клавиатуры.
+\item Степ. Этот модуль отвечает за степ.
+\item Комбинации. Этот модуль отвечает за комбинации.
+\item Слои. Этот модуль отвечает за слои.
+\item Языковая раскладка. Этот модуль отвечает за языковую раскладку.
+\item Макрос. Этот модуль отвечает за макросы.
+\item Настройки прошивки QMK. Этот модуль отвечает за настройки прошивки QMK.
+\item Тестирование матрицы клавиатуры. Этот модуль отвечает за тестирование матрицы клавиатуры.
+\item Графический интерфейс. Этот модуль отвечает за графический интерфейс.
+\item Модуль работы с клавиатурой. Этот модуль отвечает за взаимодействие с клавиатурой.
+\end{enumerate}
+
+\subsection{Компоненты системы}
+
+Разработанная система представляет собой графическое приложение для настройки клавиатур с поддержкой прошивок QMK/Vial. Ниже приведено описание основных компонентов (модулей) системы, их файловая структура и связи между ними.
+
+\subsubsection{Модуль обнаружения и управления устройствами}
+Файлы: \texttt{autodetect/device\_monitor.py}, \texttt{autodetect/monitor\_thread.py}, \texttt{device\_handler.py}, \texttt{hid\_comm.py}.
+Модуль отвечает за периодический поиск HID-устройств с поддержкой расширенного протокола (CustomKeyboard) или устройств в режиме загрузчика (BootloaderDevice). В отдельном потоке \texttt{MonitorThread} выполняется сканирование, фильтрация по magic-строкам в серийном номере и проверка корректности интерфейса. Обнаруженные устройства передаются в главное окно через сигнал \texttt{devices\_updated}. Модуль также обеспечивает открытие/закрытие устройства и подстановку сторонних JSON-определений (sideload).
+
+\subsubsection{Модуль связи с клавиатурой}
+Файлы: \texttt{comm/keyboard\_comm.py}, \texttt{comm/base\_comm.py}, \texttt{comm/constants.py}, \texttt{hid\_comm.py}.
+Класс \texttt{Keyboard} инкапсулирует всю логику обмена с устройством через HID-отчёты (функция \texttt{hid\_send}). Модуль реализует получение параметров клавиатуры (количество слоёв, матрица, энкодеры), загрузку/сохранение текущей раскладки, управление подсветкой, а также отправку команд динамической конфигурации. Поддерживаются протоколы версий 1–6. \texttt{Keyboard} служит мостом между графическими редакторами и физическим устройством.
+
+\subsubsection{Модуль протоколов динамической конфигурации}
+Файлы: \texttt{comm/macro\_protocol.py}, \texttt{comm/tap\_dance\_protocol.py}, \texttt{comm/combo\_protocol.py}, \texttt{comm/key\_override\_protocol.py}, \texttt{comm/alt\_repeat\_key.py}, \texttt{comm/dynamic\_protocol.py}.
+Каждый файл реализует отдельный протокол для чтения/записи динамических данных:
+\begin{itemize}
+	\item макросы (сериализация/десериализация, поддержка задержек и двухбайтовых кодов);
+	\item tap dance (до четырёх действий и тайминг);
+	\item комбинации (4 клавиши -> результирующая);
+	\item переопределения клавиш (условия, модификаторы, слои);
+	\item альтернативные клавиши повтора.
+\end{itemize}
+Все протоколы наследуются от \texttt{BaseProtocol} и используют единый механизм \texttt{\_retrieve\_dynamic\_entries} для пакетного получения данных. Модуль тесно связан с \texttt{Keyboard} (класс-примесь).
+
+\subsubsection{Модуль редактора раскладки клавиатуры}
+Файлы: \texttt{config/keymap\_editor.py}, \texttt{config/layout\_editor.py}, \texttt{widgets/keyboard\_widget.py}, \texttt{widgets/key\_widget.py}.
+Редактор раскладки (\texttt{KeymapEditor}) отображает графическое представление клавиатуры (виджет \texttt{KeyboardWidget}), позволяет переключать слои, выбирать отдельные клавиши и назначать им произвольные коды (ключарты). При изменении клавиши вызывается метод \texttt{Keyboard.set\_key} для отправки команды на устройство. Редактор параметров раскладки (\texttt{LayoutEditor}) управляет аппаратными опциями (на основе JSON-определения), сохраняет их в \texttt{QSettings} и уведомляет об изменениях через сигнал.
+
+\subsubsection{Модуль макросов}
+Файлы: \texttt{config/macro\_recorder.py}, \texttt{macro/macro\_tab.py}, \texttt{macro/macro\_action.py}, \texttt{macro/macro\_optimizer.py}, \texttt{macro/macro\_recorder\_linux.py}.
+Позволяет создавать и редактировать макросы в виде последовательности действий (нажатие, отпускание, текст, задержка). Поддерживается интерактивная запись с клавиатуры. Модуль оптимизирует макросы (объединение последовательных нажатий/отпусканий в \texttt{Tap}, замена печатных символов на строки). Данные сериализуются в бинарный буфер и отправляются через \texttt{Keyboard.set\_macro}. Редактор встроен в главное окно как отдельная вкладка.
+
+\subsubsection{Модуль комбинаций (Combos)}
+Файлы: \texttt{config/combo\_editor.py}, \texttt{comm/combo\_protocol.py}.
+Обеспечивает настройку комбинаций из нескольких одновременно нажатых клавиш (до 4), которые приводят к одному результирующему коду. Интерфейс реализован в виде вкладок, каждая комбинация отображается с помощью виджетов выбора ключей (\texttt{KeyWidget}). Изменения немедленно отправляются на клавиатуру через \texttt{Keyboard.combo\_set}.
+
+\subsubsection{Модуль степов (Tap Dance)}
+Файлы: \texttt{config/tap\_dance\_editor.py}, \texttt{comm/tap\_dance\_protocol.py}.
+Редактирование действий, назначаемых на один физический переключатель в зависимости от числа нажатий и удержания (одинарный тап, двойной тап, удержание, тап+удержание). Для каждого степа задаётся время тап-термина. Модуль поддерживает отложенную отправку (кнопка Save) и откат (Revert). Протокол использует те же динамические команды, что и комбинации.
+
+\subsubsection{Модуль переопределения клавиш (Key Overrides)}
+Файлы: \texttt{config/key\_override\_editor.py}, \texttt{comm/key\_override\_protocol.py}.
+Позволяет задать условную замену одной клавиши на другую с учётом активных модификаторов, текущего слоя, а также дополнительных опций (однократное срабатывание, игнорирование отрицательных модификаторов и пр.). Интерфейс включает выбор триггерной клавиши, клавиши-замены, масок модификаторов и слоёв. Каждое переопределение может быть включено/отключено.
+
+\subsubsection{Модуль альтернативных клавиш повтора (Alt Repeat Key)}
+Файлы: \texttt{config/alt\_key\_repeat.py}, \texttt{comm/alt\_repeat\_key.py}.
+Реализует функцию повторной отправки последней нажатой клавиши с возможностью подмены её на другую (например, \texttt{Alt+Repeat} вместо простого повтора). Настраиваются разрешённые модификаторы и опции двунаправленности. Модуль доступен только при наличии поддержки в прошивке.
+
+\subsubsection{Модуль настройки подсветки}
+Файлы: \texttt{config/rgb\_control.py}.
+Объединяет три типа подсветки: QMK Backlight, QMK RGBLight и собственную Vial RGB. В зависимости от возможностей устройства отображаются соответствующие элементы управления: яркость, скорость, выбор режима, выбор цвета. Команды отправляются через методы \texttt{Keyboard.set\_qmk\_rgblight\_*} и \texttt{Keyboard.set\_custom\_rgb\_*}. Состояние подсветки можно сохранить командой \texttt{save\_rgb}.
+
+\subsubsection{Модуль настроек QMK}
+Файлы: \texttt{config/qmk\_settings\_editor.py}.
+Динамически строит интерфейс на основе файла \texttt{qmk\_settings.json} (поставляется с приложением). Поддерживаются параметры типов boolean и integer. Редактор получает список поддерживаемых идентификаторов (QSID) от клавиатуры, загружает текущие значения, позволяет их изменять и сохранять. Использует протокол \texttt{CMD\_QMK\_SETTINGS\_*}.
+
+\subsubsection{Модуль тестирования матрицы}
+Файлы: \texttt{config/matrix\_tester.py}.
+Отображает виртуальную матрицу клавиш, периодически (таймер 20 мс) опрашивая состояние коммутации через \texttt{Keyboard.matrix\_poll}. Нажатые клавиши подсвечиваются на графическом представлении. Перед тестированием требуется разблокировка устройства (вызов \texttt{Unlocker.unlock}). Модуль работает только при наличии протокола версии 3 и выше.
+
+\subsubsection{Модуль обновления прошивки}
+Файлы: \texttt{config/firmware\_updater.py}.
+Позволяет прошить клавиатуру файлом с расширением \texttt{.vfw}. При этом происходит проверка целостности (SHA256), сравнение UID устройства с UID прошивки, автоматический переход в режим загрузчика, отправка данных блоками по 64 байта и последующее восстановление сохранённой раскладки (опционально). Модуль взаимодействует с \texttt{BootloaderDevice} и использует низкоуровневую отправку \texttt{pad\_for\_bootloader}.
+
+\subsubsection{Модуль графического интерфейса}
+Файлы: \texttt{main\_window.py}, \texttt{widgets/*}, \texttt{keycode\_tabs.py}.
+Главное окно (\texttt{MainWindow}) содержит комбобокс выбора устройства, панель вкладок (\texttt{QTabWidget}) для редакторов, меню (файл, безопасность, тема, справка). Виджеты:
+\begin{itemize}
+	\item \texttt{KeyboardWidget} -- отрисовка клавиатуры по KLE-описанию;
+	\item \texttt{KeyWidget} -- компактный выбор клавиши с выпадающей панелью кодов;
+	\item \texttt{SquareButton} -- квадратная кнопка с масштабированием;
+	\item \texttt{FlowLayout} -- автоматическая упаковка кнопок;
+	\item \texttt{KeycodeTabs} -- вкладки с группами клавиш (Basic, ISO/JIS, Layers, Quantum и пр.).
+\end{itemize}
+Взаимодействие с пользователем осуществляется через сигналы/слоты PyQt.
+
+\subsubsection{Модуль языковых раскладок}
+Файлы: \texttt{layouts/*.py}, \texttt{layout\_presets.py}.
+Содержит словари переопределения надписей для QWERTY/QWERTZ/AZERTY и альтернативных раскладок (Colemak, Dvorak, Bépo, русская и др.). Выбранная раскладка применяется к отображению клавиш в редакторе (метод \texttt{KeycodeDisplay.set\_keymap\_override}) и сохраняется в \texttt{QSettings}.
+
+\subsubsection{Модуль тем оформления}
+Файлы: \texttt{themes.py}.
+Определяет набор готовых цветовых схем (Light, Dark, Arc, Nord, Dracula, Catppuccin и пр.). При выборе темы изменяется палитра приложения (\texttt{QPalette}) и стиль Fusion. Настройка сохраняется и применяется после перезапуска.
+
+\subsubsection{Модуль безопасности}
+Файлы: \texttt{security\_dialog.py}.
+Реализует диалог разблокировки клавиатуры. Показывает графическое изображение клавиш, которые необходимо зажать для перехода в разблокированный режим. В процессе разблокировки отображается прогресс-бар, а при завершении редактирования можно явно заблокировать устройство (метод \texttt{Keyboard.lock}). Модуль используется редакторами перед записью критичных данных (например, макросов или сброса EEPROM).
+
+\subsubsection{Модуль работы с файлами}
+Файлы: \texttt{main\_window.py} (методы \texttt{on\_layout\_load}, \texttt{on\_layout\_save}), \texttt{text\_editor.py}.
+Обеспечивает загрузку и сохранение файлов конфигурации с расширением \texttt{.vil} (JSON-формат). При сохранении сериализуются: версия, UID клавиатуры, массивы слоёв, опции раскладки, макросы, tap dance, комбинации, переопределения клавиш, настройки QMK. Загрузка восстанавливает состояние через \texttt{Keyboard.restore\_layout}. Также доступен текстовый редактор для ручного редактирования JSON-представления макросов.
+
+\subsection{Связи между компонентами}
+
+На рисунке \ref{componentdiagram:image} (диаграмма компонентов) показано, как модули взаимодействуют друг с другом. Ключевые связи:
+
+\begin{enumerate}
+	\item \texttt{MainWindow} агрегирует \texttt{DeviceMonitor} и содержит список редакторов. При выборе устройства вызывается метод \texttt{rebuild} для каждого редактора, передавая ему объект \texttt{CustomKeyboard}.
+	\item Редакторы (унаследованные от \texttt{BasicConfig}) через поле \texttt{device} получают доступ к \texttt{Keyboard} и вызывают его методы (\texttt{set\_key}, \texttt{set\_macro}, \texttt{combo\_set}, \texttt{tap\_dance\_set} и т.д.).
+	\item \texttt{Keyboard} использует протоколы (\texttt{ProtocolMacro}, \texttt{ProtocolDynamic} и др.) для формирования пакетов и отправки через \texttt{hid\_send}.
+	\item Модуль \texttt{device\_handler} создаёт объекты \texttt{CustomKeyboard} или \texttt{BootloaderDevice} на основе HID-дескрипторов, полученных из \texttt{hid\_comm}.
+	\item \texttt{KeycodeDisplay} (утилита) глобально переопределяет отображение клавиш в соответствии с выбранной языковой раскладкой и работает со всеми виджетами, зарегистрированными через \texttt{notify\_keymap\_override}.
+	\item Система тем (\texttt{themes}) изменяет палитру всего приложения, что влияет на все графические элементы.
+	\item Диалог разблокировки (\texttt{Unlocker}) блокирует интерфейс главного окна на время процедуры, чтобы избежать конфликтующих операций.
+\end{enumerate}
+
+\subsection{Внешние компоненты системы}
+
+Для работы приложения используются следующие внешние библиотеки и фреймворки:
+
+\begin{enumerate}
+	\item \texttt{PyQt5} -- фреймворк для создания графического интерфейса (виджеты, сигналы/слоты, работа с файлами).
+	\item \texttt{hidapi} (в зависимости от ОС) -- низкоуровневый доступ к HID-устройствам, пересылка USB-отчётов.
+	\item \texttt{fbs} -- утилиты для сборки и определения ресурсов (только для десктопных сборок).
+\end{enumerate}
+
+Все внешние компоненты используются через импорты в соответствующих модулях; их версии и лицензии указаны в документации к проекту.
+
+\subsection{Структура файла *.vil}
+
+Файл *.vil -- JSON файл, который включает:
+
+\begin{enumerate}
+\item Версию файла (всегда имеет значение 1).
+\item Уникальный идентификатор конфигурации.
+\item Массив слоёв, где каждый элемент -- массив клавиш.
+\item Дополнительные опции раскладки.
+\item Массив макросов, где каждый макрос -- это массив действий.
+\item Массив степов, где каждый степ -- массив из 5 элементов (при одинарном нажатии, при двойном нажатии, при удержании, при нажатии и удержании, задержка между действиями).
+\item Массив комбо, где каждое комбо -- массив из 5 элементов (4 клавиши и результирующая клавиша).
+\item Массив переопределения ключей, где каждое переопределение -- объект, в котором есть следующие поля:
+
+\begin{itemize}
+	\item нажимаемая клавиша;
+	\item результирующая клавиша;
+	\item в каких слоях используется;
+	\item маски модификаторов;
+	\item дополнительные флаги.
+\end{itemize}
+
+Пример файла *.vil представлен на рисунке \ref{vilfile:image}:
+
+\begin{figure}[H]
+	\lstinputlisting[language={}, frame=none]{config.vil}
+	\caption{Пример файла *.vil}
+	\label{vilfile:image}
+\end{figure}
+
+\item Массив альтернативных клавиш повтора, где каждый элемент -- объект, в котором есть следующие поля:
+
+\begin{itemize}
+	\item нажимаемая клавиша;
+	\item альтернативная клавиша;
+	\item разрешённый модификаторы;
+	\item дополнительные флаги.
+\end{itemize}
+
+\item Объект настроек прошивки QMK, который содержит все настройки прошивки QMK.
+\end{enumerate}
+
+\subsection{Проектирование пользовательского интерфейса программы}
+
+На рисунке \ref{mainlayout:image} изображена главная страница программы.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{mainlayout}
+	\caption{Интерфейс главной страницы}
+	\label{mainlayout:image}
+\end{figure}
+
+В таблице \ref{main:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса главной страницы\label{main:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{main:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопка & Открывает меню "<File"> \\ \hline
+	2 & Кнопка & Открывает меню "<Keyboard layout"> \\ \hline
+	3 & Кнопка & Открывает меню "<Security"> \\ \hline
+	4 & Кнопка & Открывает меню "<Theme"> \\ \hline
+	5 & Кнопка & Открывает меню "<About"> \\ \hline
+	6 & Кнопка & Открывает меню "<Keymap"> \\ \hline
+	7 & Кнопка & Открывает меню "<Macros"> \\ \hline
+	8 & Кнопка & Открывает меню "<Lightning"> \\ \hline
+	9 & Кнопка & Открывает меню "<Tap Dance"> \\ \hline
+	10 & Кнопка & Открывает меню "<Combos"> \\ \hline
+	11 & Кнопка & Открывает меню "<Key Overrides"> \\ \hline
+	12 & Кнопка & Открывает меню "<Alt Repeat Key"> \\ \hline
+	13 & Кнопка & Открывает меню "<QMK Settings"> \\ \hline
+	14 & Кнопки & Позволяют выбрать слой клавиш от 1 до 14 \\ \hline
+	15 & Кнопки & Позволяют настроить каждый слой клавиатуры от 1 до 14 \\ \hline
+	16 & Кнопка & Открывает базовые клавиши для их использования \\ \hline
+	17 & Кнопка & Открывает клавиши для Европейской и Японской клавиатуры \\ \hline
+	18 & Кнопка & Открывает кнопки слоёв \\ \hline
+	19 & Кнопка & Открывает клавиши QMK прошивки \\ \hline
+	20 & Кнопка & Открывает клавиши подсветки \\ \hline
+	21 & Кнопка & Открывает клавиши приложений, медиа и мыши \\ \hline
+	22 & Кнопка & Открывает клавиши Tap Dance \\ \hline
+	23 & Кнопка & Открывает пользовательские клавиши \\ \hline
+	24 & Кнопка & Открывает клавиши макросов \\ \hline
+	25 & Кнопка & Поле выбора нужной кнопки для настройки слоя клавиатуры \\ \hline
+	26 & Кнопка & Сбрасывает все настройки до первоначальных
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{file:layoutimage} изображено выпадающее окно "<File">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{filelayout}
+	\caption{Выпадающее окно "<File">}
+	\label{file:layoutimage}
+\end{figure}
+
+В таблице \ref{file:layouttable} Выпадающее окно "<File">.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов выпадающего окна "<File">\label{file:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{file:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопка & Загружает файл с ПК \\ \hline
+	2 & Кнопка & Сохраняет текущую раскладку в файл на ПК \\ \hline
+	3 & Кнопка & Дополнительная загрузка через JSON \\ \hline
+	4 & Кнопка & Скачать VIA \\ \hline
+	5 & Кнопка & Загружает фиктивный JSON \\ \hline
+	6 & Кнопка & Закрывает выпадающее окно
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Keyboard layout:layoutimage} изображена выпадающее окно "<Keyboard layout">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.4\linewidth]{Keyboard layout layout}
+	\caption{Выпадающее окно "<Keyboard layout">}
+	\label{Keyboard layout:layoutimage}
+\end{figure}
+
+В таблице \ref{Keyboard layout:layouttable} представлено описание объектов данного выпадающего окна.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса выпадающего окна "<Keyboard layout">\label{Keyboard layout:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Keyboard layout:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Флажки & Выбор нужной языковой раскладки клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Security:layoutimage} изображено выпадающее окно "<Security">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{Securitylayout}
+	\caption{выпадающее окно "<Security">}
+	\label{Security:layoutimage}
+\end{figure}
+
+В таблице \ref{Security:layouttable} представлено описание объектов данного выпадающего окна.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса выпадающего окна "<Security">\label{Security:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Security:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопка & Разблокировка клавиатуры для изменения в ней параметров \\ \hline
+	2 & Кнопка & Блокировка клавиатуры для невозможности измены её параметров \\ \hline
+	3 & Кнопка & Перезагрузка клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Theme:layoutimage} изображено выпадающее окно "<Theme">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.4\linewidth]{Themelayout}
+	\caption{выпадающее окно "<Theme">}
+	\label{Theme:layoutimage}
+\end{figure}
+
+В таблице \ref{Theme:layouttable} представлено описание объектов данного выпадающего окна.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса выпадающего окна "<Theme">\label{Theme:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Theme:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Флажки & Выбор нужной цветовой темы программы
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{About:layoutimage} изображена страница "<About">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{Aboutlayout}
+	\caption{страница "<About">}
+	\label{About:layoutimage}
+\end{figure}
+
+В таблице \ref{About:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<About">\label{About:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{About:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопка & Выводит всю информацию о клавиатуре \\ \hline
+	2 & Кнопка & Выводит краткую информацию о программе
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Macros:layoutimage} изображена страница "<Macros">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Macroslayout}
+	\caption{Страница "<Macros">}
+	\label{Macros:layoutimage}
+\end{figure}
+
+В таблице \ref{Macros:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Macros">\label{Macros:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Macros:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки для выбора профиля макроса \\ \hline
+	2 & Кнопки & Для удобного пролистывания профилей макросов \\ \hline
+	3 & Кнопки & Удаляют действия макроса \\ \hline
+	4 & Кнопки & Перемещают действия вверх или вниз \\ \hline
+	5 & Кнопки & Открывают панель выбора кнопки из той или иной раскладки клавиатуры \\ \hline
+	6 & Числовое поле & Позволяет ввести в него то количество мили секунд, которое будет выполняться то или иное действие \\ \hline
+	7 & Радио кнопки & На выбор несколько вариантов действий макроса \\ \hline
+	8 & Кнопка & Открывает текстовый редактор \\ \hline
+	9 & Кнопка & Добавляет одно действие для макроса \\ \hline
+	10 & Кнопка & Добавляет в макрос действие нажатия кнопки Enter \\ \hline
+	11 & Радио кнопки & Позволяет сохранить макрос, либо добавить его к уже существующему макросу \\ \hline
+	12 & Кнопка & Сохраняет макрос \\ \hline
+	13 & Кнопка & Удаляет все действия с макросом, очищая рабочую зону \\ \hline
+	14 & Label & Показывает какое количество памяти занимает макрос
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Lightning:layoutimage} изображена страница "<Lightning">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Lightninglayout}
+	\caption{Страница "<Lightning">}
+	\label{Lightning:layoutimage}
+\end{figure}
+
+В таблице \ref{Lightning:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Lightning">\label{Lightning:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Lightning:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Радио кнопки & Позволяет выбрать один из многих типов подсветки клавиатуры \\ \hline
+	2 & Кнопка & Открывает меню точной настройки цвета по трём каналам RGB \\ \hline
+	3 & Ползунок & Позволяет настроить яркость подсветки \\ \hline
+	4 & Ползунок & Позволяет настроить скорость смены подсветки \\ \hline
+	5 & Кнопка & Сохраняет подсветку \\ \hline
+	6 & Подписи & Непосредственно подписывают то, к чему относятся элементы возле них
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Tap Dance:layoutimage} изображена страница "<Tap Dance">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Tap Dancelayout}
+	\caption{Страница "<Tap Dance">}
+	\label{Tap Dance:layoutimage}
+\end{figure}
+
+В таблице \ref{Tap Dance:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Tap Dance">\label{Tap Dance:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Tap Dance:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки выбора одного из "<Tap Dance"> \\ \hline
+	2 & Label & Отображают информацию о элементах справа \\ \hline
+	3 & Label & Описание поля для ввода данных \\ \hline
+	4 & Кнопки & Открывают панель выбора клавиш раскладки клавиатуры \\ \hline
+	5 & Числовое поле & Позволяет ввести в него то количество мили секунд, которое будет дано на выполнение "<Tap Dance"> \\ \hline
+	6 & Кнопка & Сохраняет готовый "<Tap Dance"> \\ \hline
+	7 & Кнопка & Очищает рабочее поле
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Combos:layoutimage} изображена страница "<Combos">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Comboslayout}
+	\caption{Страница "<Combos">}
+	\label{Combos:layoutimage}
+\end{figure}
+
+В таблице \ref{Combos:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Combos">\label{Combos:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Combos:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки выбора одного из "<Combos"> \\ \hline
+	2 & Label & Отображают информацию о элементах справа \\ \hline
+	3 & Кнопки & Открывают панель выбора клавиш раскладки клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Key Overrides:layoutimage} изображена страница "<Key Overrides">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Key Overrideslayout}
+	\caption{Страница "<Key Overrides">}
+	\label{Key Overrides:layoutimage}
+\end{figure}
+
+В таблице \ref{Key Overrides:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Key Overrides">\label{Key Overrides:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Key Overrides:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки выбора одного из "<Key Overrides"> \\ \hline
+	2 & Label & Отображают информацию о элементах справа \\ \hline
+	3 & Флажки & Позволяют настроить нужные слои, которые будут активны \\ \hline
+	4 & Кнопки & Позволяют активировать/выключить все флажки для настройки активных слоёв \\ \hline
+	5 & Кнопка & При нажатии задаётся кнопка триггера из всех раскладок клавиатур \\ \hline
+	6 & Флажки & Выбирают активные функции \\ \hline
+	7 & Кнопка & При нажатии задаётся кнопка, на которую будет заменяться предыдущая кнопка \\ \hline
+	8 & Label & Показывает информацию для флажков слева \\ \hline
+	9 & Флажок & При нажатии включается та или иная настройка
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Alt Repeat Key:layoutimage} изображена страница "<Alt Repeat Key">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Alt Repeat Keylayout}
+	\caption{Страница "<Alt Repeat Key">}
+	\label{Alt Repeat Key:layoutimage}
+\end{figure}
+
+В таблице \ref{Alt Repeat Key:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Alt Repeat Key">\label{Alt Repeat Key:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Alt Repeat Key:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки выбора одного из "<Alt Repeat Key"> \\ \hline
+	2 & Label & Отображают информацию о элементах справа \\ \hline
+	3 & Флажок & Позволяет настроить включённость настроек \\ \hline
+	4 & Кнопка & При нажатии можно выбрать кнопку, которая будет заменена на альтернативную, и предыдущую кнопку \\ \hline
+	5 & Флажки & Позволяют настроить "<Alt Repeat Key">
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{QMK Settings:layoutimage} изображена страница "<QMK Settings">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{QMK Settingslayout}
+	\caption{Страница "<QMK Settings">}
+	\label{QMK Settings:layoutimage}
+\end{figure}
+
+В таблице \ref{QMK Settings:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<QMK Settings">\label{QMK Settings:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{QMK Settings:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Кнопки выбора одного из "<QMK Settings"> \\ \hline
+	2 & Label & Отображают информацию о элементах справа \\ \hline
+	3 & Флажки & Позволяет настроить включённость настроек \\ \hline
+	4 & Кнопка & Сбрасывает настройки \\ \hline
+	5 & Кнопка & Возвращает предыдущие настройки \\ \hline
+	6 & Кнопка & Сохраняет настройки
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Grave Escape:layoutimage} изображена страница "<Grave Escape">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Grave Escapelayout}
+	\caption{Страница "<Grave Escape">}
+	\label{Grave Escape:layoutimage}
+\end{figure}
+
+В таблице \ref{Grave Escape:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Grave Escape">\label{Grave Escape:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Grave Escape:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Label & Отображают информацию о элементах справа \\ \hline
+	2 & Флажки & Позволяет настроить включённость настроек \\ \hline
+	3 & Кнопки & Сохранить, вернуть, сбросить
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Tap-Hold:layoutimage} изображена страница "<Tap-Hold">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Tap-Holdlayout}
+	\caption{Страница "<Tap-Hold">}
+	\label{Tap-Hold:layoutimage}
+\end{figure}
+
+В таблице \ref{Tap-Hold:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Tap-Hold">\label{Tap-Hold:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Tap-Hold:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Label & Отображают информацию о элементах справа \\ \hline
+	2 & Числовое поле & Вносит числовые характеристики \\ \hline
+	3 & Флажки & Позволяют настроить параметры, описанные слева \\ \hline
+	4 & Числовые поля & Позволяют ввести числа для более точной настройки \\ \hline
+	5 & Флажок & Настройка удерживания хордовых \\ \hline
+	6 & Числовое поле & Позволяет ввести числовые переменные для более точной настройки \\ \hline
+	7 & Кнопки & Сохранить, вернуть, сбросить
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Auto Shift:layoutimage} изображена страница "<Auto Shift">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Auto Shiftlayout}
+	\caption{Страница "<Auto Shift">}
+	\label{Auto Shift:layoutimage}
+\end{figure}
+
+В таблице \ref{Auto Shift:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Auto Shift">\label{Auto Shift:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Auto Shift:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Label & Отображают информацию о элементах справа \\ \hline
+	2 & Флажки & Включают, включают для модификаторов "<Auto Shift"> \\ \hline
+	3 & Числовое поле & Позволяет настроить "<Timeout"> \\ \hline
+	4 & Флажки & Позволяют настроить параметры, описанные слева \\ \hline
+	5 & Кнопки & Сохранить, вернуть, сбросить
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Combo:layoutimage} изображена страница "<Combo">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Combolayout}
+	\caption{Страница "<Combo">}
+	\label{Combo:layoutimage}
+\end{figure}
+
+В таблице \ref{Combo:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Combo">\label{Combo:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Combo:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Label & Отображают информацию о элементах справа \\ \hline
+	2 & Числовое поле & Позволяет настроить "<Timeout"> между комбинациями \\ \hline
+	3 & Кнопки & Сохранить, вернуть, сбросить
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{One Shot Keys:layoutimage} изображена страница "<One Shot Keys">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{One Shot Keyslayout}
+	\caption{Страница "<One Shot Keys">}
+	\label{One Shot Keys:layoutimage}
+\end{figure}
+
+В таблице \ref{One Shot Keys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<One Shot Keys">\label{One Shot Keys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{One Shot Keys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Label & Отображают информацию о элементах справа \\ \hline
+	2 & Числовые поля & Позволяют настроить количество раз, которое клавиша удерживается для повторного нажатия, время в мили секундах до отпускания клавиши \\ \hline
+	3 & Кнопки & Сохранить, вернуть, сбросить
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{Matrix tester:layoutimage} изображена страница "<Matrix tester">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{Matrix testerlayout}
+	\caption{Страница "<Matrix tester">}
+	\label{Matrix tester:layoutimage}
+\end{figure}
+
+В таблице \ref{Matrix tester:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы "<Matrix tester">\label{Matrix tester:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{Matrix tester:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из нажатых кнопок на клавиатуре отображается на данной матрице кнопок \\ \hline
+	2 & Кнопка & Обнуляет матрицу
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{basekeymap:layoutimage} изображена страница базовой раскладки клавиатуры.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{basekeymaplayout}
+	\caption{Страница базовой раскладки клавиатуры}
+	\label{basekeymap:layoutimage}
+\end{figure}
+
+В таблице \ref{basekeymap:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы базовой раскладки клавиатуры\label{basekeymap:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{basekeymap:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке той или иной функции клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{eurojapankeymap:layoutimage} изображена страница европейской и японской раскладок клавиатур.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{eurojapankeymaplayout}
+	\caption{Страница европейской и японской раскладок клавиатур}
+	\label{eurojapankeymap:layoutimage}
+\end{figure}
+
+В таблице \ref{eurojapankeymap:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы европейской и японской раскладок клавиатур\label{eurojapankeymap:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{eurojapankeymap:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке той или иной функции клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{printlayer:layoutimage} изображена страница слоёв для печати.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{printlayerlayout}
+	\caption{Страница слоёв для печати}
+	\label{printlayer:layoutimage}
+\end{figure}
+
+В таблице \ref{printlayer:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы слоёв для печати\label{printlayer:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{printlayer:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке той или иной функции клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{qmkkeys:layoutimage} изображена страница клавиш QMK.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{qmkkeyslayout}
+	\caption{Страница клавиш QMK}
+	\label{qmkkeys:layoutimage}
+\end{figure}
+
+В таблице \ref{qmkkeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш QMK\label{qmkkeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{qmkkeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке той или иной QMK функции клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{lightkeys:layoutimage} изображена страница клавиш подсветки.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{lightkeyslayout}
+	\caption{Страница клавиш подсветки}
+	\label{lightkeys:layoutimage}
+\end{figure}
+
+В таблице \ref{lightkeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш подсветки\label{lightkeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{lightkeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке подсветки клавиатуры с клавиатуры
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{mediamousekeys:layoutimage} изображена страница клавиш приложений, медиа и мыши.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{mediamousekeyslayout}
+	\caption{Страница клавиш приложений, медиа и мыши}
+	\label{mediamousekeys:layoutimage}
+\end{figure}
+
+В таблице \ref{mediamousekeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш приложений, медиа и мыши\label{mediamousekeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{mediamousekeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке как обычной клавиатуры, так и клавиатуры с трекболом 
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{tapdancekeys:layoutimage} изображена страница клавиш "<Tap Dance">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{tapdancekeyslayout}
+	\caption{Страница клавиш "<Tap Dance">}
+	\label{tapdancekeys:layoutimage}
+\end{figure}
+
+В таблице \ref{tapdancekeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш "<Tap Dance">\label{tapdancekeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{tapdancekeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при настройке "<Tap Dance"> и сохранения их профилей 
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{userkeys:layoutimage} изображена страница клавиш "<User">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{userkeyslayout}
+	\caption{Страница клавиш "<User">}
+	\label{userkeys:layoutimage}
+\end{figure}
+
+В таблице \ref{userkeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш "<User">\label{userkeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{userkeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при пользовательских настройках, которые индивидуальны для физиологии человека 
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
+На рисунке \ref{macrokeys:layoutimage} изображена страница клавиш "<Macro">.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{macrokeyslayout}
+	\caption{Страница клавиш "<Macro">}
+	\label{macrokeys:layoutimage}
+\end{figure}
+
+В таблице \ref{macrokeys:layouttable} представлено описание объектов данного интерфейса.
+
+\renewcommand{\arraystretch}{0.8} % уменьшение расстояний до сетки таблицы
+\begin{xltabular}{\textwidth}{|p{2.25cm}|p{2.25cm}|X|}
+	\caption{Описание объектов интерфейса страницы клавиш "<Macro">\label{macrokeys:layouttable}}\\
+	\hline \centrow \setlength{\baselineskip}{0.7\baselineskip} Номер объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Тип объекта & \centrow \setlength{\baselineskip}{0.7\baselineskip} Действие/описание объекта \\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\endfirsthead
+	\caption*{Продолжение таблицы \ref{macrokeys:layouttable}}\\
+	\hline \centrow 1 & \centrow 2 & \centrow 3\\ \hline
+	\finishhead
+	1 & Кнопки & Каждая из кнопок нужна при пользовательских настройках, которые индивидуальны для физиологии человека 
+\end{xltabular}
+\renewcommand{\arraystretch}{1.0} % восстановление сетки
+
